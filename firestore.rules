@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Question Papers Collection
+    match /question_papers/{paperId} {
+      // Anyone can read question papers
+      allow read: if true;
+      
+      // Only authenticated users can create
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll([
+                      'college', 'branch', 'semester', 
+                      'subject', 'examType', 'imageUrl'
+                    ])
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.imageUrl.matches('https://.*');
+      
+      // Only authenticated users can update/delete their own papers
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Submitted Papers Collection (your current collection)
+    match /submitted_papers/{paperId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can create their own profile
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own profile
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Prevent deletion
+      allow delete: if false;
+    }
+    
+    // Test collection (for development)
+    match /test/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
