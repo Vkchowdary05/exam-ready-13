@@ -60,7 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(result['message']),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -92,7 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(result['message']),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -105,20 +109,26 @@ class _LoginScreenState extends State<LoginScreen> {
           content: const Text('Please enter your email address'),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
     }
 
-    final result = await _authService.resetPassword(email: _emailController.text);
+    final result = await _authService.resetPassword(
+      email: _emailController.text,
+    );
 
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['message']),
-        backgroundColor: result['success'] ? AppTheme.secondaryColor : AppTheme.errorColor,
+        backgroundColor: result['success']
+            ? AppTheme.secondaryColor
+            : AppTheme.errorColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -134,9 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOut;
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -172,9 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
 
-    return AnimatedGoogleButton(
-      onPressed: _handleGoogleSignIn,
-    );
+    return AnimatedGoogleButton(onPressed: _handleGoogleSignIn);
   }
 
   @override
@@ -185,9 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.backgroundGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -202,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: screenHeight * 0.06),
-                    
+
                     // Logo/Icon Hero
                     Center(
                       child: Hero(
@@ -222,77 +229,92 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                    ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                    ).animate().scale(
+                      duration: 600.ms,
+                      curve: Curves.elasticOut,
+                    ),
 
                     SizedBox(height: screenHeight * 0.05),
 
                     // Welcome Text
-                    Text(
-                      'Welcome Back!',
-                      style: AppTheme.headingStyle,
-                    ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
+                    Text('Welcome Back!', style: AppTheme.headingStyle)
+                        .animate()
+                        .fadeIn(delay: 200.ms)
+                        .slideX(begin: -0.2, end: 0),
 
                     const SizedBox(height: 8),
                     Text(
-                      'Login to continue your journey',
-                      style: AppTheme.subHeadingStyle,
-                    ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2, end: 0),
+                          'Login to continue your journey',
+                          style: AppTheme.subHeadingStyle,
+                        )
+                        .animate()
+                        .fadeIn(delay: 300.ms)
+                        .slideX(begin: -0.2, end: 0),
 
                     SizedBox(height: screenHeight * 0.05),
 
                     // Email Field
                     TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: AppTheme.inputTextStyle,
-                      decoration: AppTheme.inputDecoration(
-                        hint: 'Email Address',
-                        icon: Icons.email_outlined,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: AppTheme.inputTextStyle,
+                          decoration: AppTheme.inputDecoration(
+                            hint: 'Email Address',
+                            icon: Icons.email_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        )
+                        .animate()
+                        .fadeIn(delay: 400.ms)
+                        .slideY(begin: 0.2, end: 0),
 
                     const SizedBox(height: 20),
 
                     // Password Field
                     TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: AppTheme.inputTextStyle,
-                      decoration: AppTheme.inputDecoration(
-                        hint: 'Password',
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: AppTheme.textSecondary,
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: AppTheme.inputTextStyle,
+                          decoration: AppTheme.inputDecoration(
+                            hint: 'Password',
+                            icon: Icons.lock_outline,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: AppTheme.textSecondary,
+                              ),
+                              onPressed: () {
+                                setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                );
+                              },
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            return null;
                           },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
+                        )
+                        .animate()
+                        .fadeIn(delay: 500.ms)
+                        .slideY(begin: 0.2, end: 0),
 
                     const SizedBox(height: 12),
 
@@ -315,11 +337,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     // Login Button
                     GradientButton(
-                      text: 'Login',
-                      onPressed: _handleLogin,
-                      isLoading: _isLoading,
-                      icon: Icons.login,
-                    ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+                          text: 'Login',
+                          onPressed: _handleLogin,
+                          isLoading: _isLoading,
+                          icon: Icons.login,
+                        )
+                        .animate()
+                        .fadeIn(delay: 700.ms)
+                        .slideY(begin: 0.2, end: 0),
 
                     SizedBox(height: screenHeight * 0.03),
 
@@ -329,10 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Expanded(child: Divider(color: Colors.grey.shade300)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR',
-                            style: AppTheme.subHeadingStyle,
-                          ),
+                          child: Text('OR', style: AppTheme.subHeadingStyle),
                         ),
                         Expanded(child: Divider(color: Colors.grey.shade300)),
                       ],
@@ -386,11 +408,8 @@ class _LoginScreenState extends State<LoginScreen> {
 // IMPORTANT: Move the AnimatedGoogleButton class OUTSIDE of _LoginScreenState
 class AnimatedGoogleButton extends StatefulWidget {
   final VoidCallback onPressed;
-  
-  const AnimatedGoogleButton({
-    super.key,
-    required this.onPressed,
-  });
+
+  const AnimatedGoogleButton({super.key, required this.onPressed});
 
   @override
   State<AnimatedGoogleButton> createState() => _AnimatedGoogleButtonState();
@@ -411,13 +430,9 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
       duration: const Duration(milliseconds: 2000),
     )..repeat();
 
-    _shimmerAnimation = Tween<double>(
-      begin: -2,
-      end: 2,
-    ).animate(CurvedAnimation(
-      parent: _shimmerController,
-      curve: Curves.easeInOut,
-    ));
+    _shimmerAnimation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -446,10 +461,7 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
           decoration: BoxDecoration(
             gradient: _isHovered
                 ? LinearGradient(
-                    colors: [
-                      Colors.white,
-                      Colors.blue.withAlpha(13),
-                    ],
+                    colors: [Colors.white, Colors.blue.withAlpha(13)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -461,8 +473,8 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                 color: _isPressed
                     ? Colors.black.withAlpha(26)
                     : (_isHovered
-                        ? Colors.blue.withAlpha(51)
-                        : Colors.black.withAlpha(20)),
+                          ? Colors.blue.withAlpha(51)
+                          : Colors.black.withAlpha(20)),
                 blurRadius: _isPressed ? 8 : (_isHovered ? 20 : 12),
                 offset: Offset(0, _isPressed ? 2 : (_isHovered ? 8 : 4)),
                 spreadRadius: _isHovered ? 2 : 0,
@@ -501,7 +513,7 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                     );
                   },
                 ),
-              
+
               // Button content
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -515,14 +527,15 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                     AnimatedScale(
                       scale: _isHovered ? 1.1 : 1.0,
                       duration: const Duration(milliseconds: 200),
-                      child: Image.network(
-                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        height: 24,
-                        width: 24,
+                      child: const Icon(
+                        Icons.g_mobiledata, // Simple stylized 'G' icon
+                        color: Colors.redAccent,
+                        size: 28,
                       ),
                     ),
+
                     const SizedBox(width: 16),
-                    
+
                     // Text with color animation
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 200),
@@ -536,7 +549,7 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                       ),
                       child: const Text('Continue with Google'),
                     ),
-                    
+
                     // Arrow icon that appears on hover
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),

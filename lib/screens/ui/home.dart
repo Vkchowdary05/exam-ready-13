@@ -2,9 +2,12 @@ import 'package:exam_ready/models/question_paper_model.dart';
 import 'package:exam_ready/screens/ui/profile_page.dart';
 import 'package:exam_ready/screens/ui/search.dart';
 import 'package:exam_ready/screens/ui/question_paper_submission_page.dart';
+import 'package:exam_ready/providers/dashboard_provider.dart' as dashboard;
+import 'package:exam_ready/services/firebase_service.dart';
+import 'package:exam_ready/widgets/modern_loading_indicator.dart';
+import 'package:exam_ready/widgets/animated_scale_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:exam_ready/riverpod/question_paper_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -56,7 +59,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final recentActivity = ref.watch(recentActivityProvider);
+    final recentActivity = ref.watch(dashboard.recentActivityProvider);
+    final recentQuestionPapers = ref.watch(
+      dashboard.recentQuestionPapersProvider,
+    );
 
     return Scaffold(
       body: Container(
@@ -117,7 +123,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildRecentActivity(recentActivity),
+                            _buildRecentActivity(
+                              recentActivity,
+                              recentQuestionPapers,
+                            ),
                             const SizedBox(height: 20),
                           ],
                         ),
@@ -277,95 +286,120 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildStatsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.3,
-      children: [
-        _StatCardFromFirestore(
-          title: 'Colleges',
-          icon: Icons.school,
-          collection: 'colleges',
-          color: const Color(0xFF4CAF50),
-          delay: 0,
-        ),
-        _StatCardFromFirestore(
-          title: 'Exam Papers',
-          icon: Icons.description,
-          collection: 'question_papers',
-          color: const Color(0xFF2196F3),
-          delay: 100,
-        ),
-        _StatCardFromFirestore(
-          title: 'Branches',
-          icon: Icons.layers,
-          collection: 'branches',
-          color: const Color(0xFFFF9800),
-          delay: 200,
-        ),
-        _StatCardFromFirestore(
-          title: 'Active Users',
-          icon: Icons.people,
-          collection: 'users',
-          color: const Color(0xFF9C27B0),
-          delay: 300,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive grid based on screen width
+        int crossAxisCount;
+        if (constraints.maxWidth < 600) {
+          crossAxisCount = 1; // Mobile: single column
+        } else if (constraints.maxWidth < 900) {
+          crossAxisCount = 2; // Tablet: two columns
+        } else {
+          crossAxisCount = 3; // Desktop: three columns
+        }
+
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: constraints.maxWidth < 600 ? 2.0 : 1.3,
+          children: [
+            _StatCardFromFirestore(
+              title: 'Colleges',
+              icon: Icons.school,
+              collection: 'colleges',
+              color: const Color(0xFF4CAF50),
+              delay: 0,
+            ),
+            _StatCardFromFirestore(
+              title: 'Exam Papers',
+              icon: Icons.description,
+              collection: 'question_papers',
+              color: const Color(0xFF2196F3),
+              delay: 100,
+            ),
+            _StatCardFromFirestore(
+              title: 'Branches',
+              icon: Icons.layers,
+              collection: 'branches',
+              color: const Color(0xFFFF9800),
+              delay: 200,
+            ),
+            _StatCardFromFirestore(
+              title: 'Active Users',
+              icon: Icons.people,
+              collection: 'users',
+              color: const Color(0xFF9C27B0),
+              delay: 300,
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildRecentActivity(AsyncValue<List<QuestionPaper>> recentActivity) {
-    return recentActivity.when(
-      data: (papers) {
-        if (papers.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(13),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Text(
-                'No recent activity',
-                style: TextStyle(color: Color(0xFF7C8BA0), fontSize: 14),
-              ),
-            ),
-          );
-        }
-        return Column(
-          children: papers.map((paper) {
-            return _buildActivityItem(
-              'New paper added',
-              paper.subject,
-              Icons.add_circle_outline,
-              const Color(0xFF4CAF50),
-              '2 hours ago',
+  Widget _buildRecentActivity(
+    AsyncValue<List<Map<String, dynamic>>> recentActivity,
+    AsyncValue<List<QuestionPaper>> recentQuestionPapers,
+  ) {
+    return Column(
+      children: [
+        // Recent Activity Feed
+        recentActivity.when(
+          data: (activities) {
+            if (activities.isEmpty) {
+              return _buildEmptyState('No recent activity', Icons.timeline);
+            }
+            return Column(
+              children: activities.take(3).map((activity) {
+                return _buildActivityItem(
+                  activity['title'] ?? 'Activity',
+                  activity['description'] ?? 'No description',
+                  _getActivityIcon(activity['type']),
+                  _getActivityColor(activity['type']),
+                  _formatTimestamp(activity['timestamp']),
+                );
+              }).toList(),
             );
-          }).toList(),
-        );
-      },
-      loading: () => const CircularProgressIndicator(),
-      error: (error, stackTrace) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          },
+          loading: () => const ModernLoadingIndicator(
+            message: 'Loading activity...',
+            type: LoadingType.dots,
+          ),
+          error: (error, stackTrace) =>
+              _buildErrorState('Failed to load activity'),
         ),
-        child: const Text(
-          'Error loading recent activity',
-          style: TextStyle(color: Colors.red),
+
+        const SizedBox(height: 16),
+
+        // Recent Question Papers
+        recentQuestionPapers.when(
+          data: (papers) {
+            if (papers.isEmpty) {
+              return _buildEmptyState('No recent papers', Icons.description);
+            }
+            return Column(
+              children: papers.take(2).map((paper) {
+                return _buildActivityItem(
+                  'New paper added',
+                  '${paper.subject} - ${paper.college}',
+                  Icons.add_circle_outline,
+                  const Color(0xFF4CAF50),
+                  _formatTimestamp(paper.uploadedAt),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const ModernLoadingIndicator(
+            message: 'Loading papers...',
+            type: LoadingType.dots,
+          ),
+          error: (error, stackTrace) =>
+              _buildErrorState('Failed to load papers'),
         ),
-      ),
+      ],
     );
   }
 
@@ -376,61 +410,173 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     Color color,
     String time,
   ) {
+    return AnimatedScaleButton(
+      onPressed: () {
+        // Handle activity item tap
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF7C8BA0),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              time,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF95A5A6)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(13),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(icon, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+      ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withAlpha(26),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 16),
+          const Icon(Icons.error_outline, color: Colors.red),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF7C8BA0),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            time,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF95A5A6)),
+            child: Text(message, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+  }
+
+  IconData _getActivityIcon(String? type) {
+    switch (type) {
+      case 'paper_added':
+        return Icons.add_circle_outline;
+      case 'user_login':
+        return Icons.login;
+      case 'user_signup':
+        return Icons.person_add;
+      case 'paper_viewed':
+        return Icons.visibility;
+      default:
+        return Icons.timeline;
+    }
+  }
+
+  Color _getActivityColor(String? type) {
+    switch (type) {
+      case 'paper_added':
+        return const Color(0xFF4CAF50);
+      case 'user_login':
+        return const Color(0xFF2196F3);
+      case 'user_signup':
+        return const Color(0xFF9C27B0);
+      case 'paper_viewed':
+        return const Color(0xFFFF9800);
+      default:
+        return const Color(0xFF607D8B);
+    }
+  }
+
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+
+    DateTime dateTime;
+    if (timestamp is Timestamp) {
+      dateTime = timestamp.toDate();
+    } else if (timestamp is String) {
+      dateTime = DateTime.parse(timestamp);
+    } else {
+      return 'Just now';
+    }
+
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
   }
 
   Widget _buildFloatingActionButton() {
@@ -655,7 +801,7 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
   }
 
   Stream<int> _fetchCount(String collection) {
-    return FirebaseFirestore.instance
+    return FirebaseService.instance.firestore
         .collection(collection)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
