@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:exam_ready/data/dropdown_data.dart';
 import 'package:exam_ready/models/question_paper_model.dart';
 import 'package:exam_ready/repositories/search_repository.dart';
@@ -5,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:ui';
 
 final searchRepositoryProvider = Provider((ref) => SearchRepository());
 
@@ -50,6 +51,9 @@ class _SearchQuestionPaperPageState
   DocumentSnapshot? _lastDocument;
   bool _isLoadingMore = false;
   bool _hasMore = true;
+
+  // Stream management for memory leak prevention
+  StreamSubscription<List<QuestionPaper>>? _searchSubscription;
 
   @override
   void initState() {
@@ -101,6 +105,9 @@ class _SearchQuestionPaperPageState
       _isLoadingMore = true;
     });
 
+    // Cancel previous subscription to prevent memory leaks
+    await _searchSubscription?.cancel();
+
     final searchRepository = ref.read(searchRepositoryProvider);
     final stream = searchRepository.searchExamPapers(
       college: _selectedCollege,
@@ -111,27 +118,51 @@ class _SearchQuestionPaperPageState
       startAfter: _lastDocument,
     );
 
-    final newPapers = await stream.first;
+    // Use subscription for proper stream management
+    _searchSubscription = stream.listen(
+      (newPapers) {
+        if (mounted) {
+          if (newPapers.length < 20) {
+            _hasMore = false;
+          }
 
-    if (newPapers.length < 20) {
-      _hasMore = false;
-    }
+          if (newPapers.isNotEmpty) {
+            // Update last document for pagination
+            FirebaseFirestore.instance
+                .collection('submitted_papers')
+                .doc(newPapers.last.id)
+                .get()
+                .then((doc) {
+                  if (mounted) {
+                    _lastDocument = doc;
+                  }
+                });
+          }
 
-    if (newPapers.isNotEmpty) {
-      _lastDocument = await FirebaseFirestore.instance
-          .collection('submitted_papers')
-          .doc(newPapers.last.id)
-          .get();
-    }
-
-    setState(() {
-      _papers.addAll(newPapers);
-      _isLoadingMore = false;
-    });
+          setState(() {
+            _papers.addAll(newPapers);
+            _isLoadingMore = false;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoadingMore = false;
+          });
+          // Handle error appropriately
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading papers: $error')),
+          );
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
+    // Cancel stream subscription to prevent memory leaks
+    _searchSubscription?.cancel();
     _headerController.dispose();
     _filterPanelController.dispose();
     _scrollController.dispose();
@@ -713,17 +744,17 @@ class _PaperCardState extends State<PaperCard>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(0.45),
-                          Colors.white.withOpacity(0.25),
+                          Colors.white.withValues(alpha: 0.45),
+                          Colors.white.withValues(alpha: 0.25),
                         ],
                       ),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 24,
                           offset: const Offset(0, 10),
                         ),
@@ -735,9 +766,8 @@ class _PaperCardState extends State<PaperCard>
                         if (widget.paper.imageUrl.isNotEmpty)
                           Hero(
                             tag: 'paper_${widget.paper.id}',
-                            child: SizedBox(
-                              height: 200,
-                              width: double.infinity,
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9, // Responsive aspect ratio
                               child: CachedNetworkImage(
                                 imageUrl: widget.paper.imageUrl,
                                 fit: BoxFit.cover,
