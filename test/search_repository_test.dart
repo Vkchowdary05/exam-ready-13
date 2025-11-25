@@ -1,4 +1,3 @@
-
 import 'package:exam_ready/models/question_paper_model.dart';
 import 'package:exam_ready/repositories/search_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,7 +53,9 @@ void main() {
       // Expect that the stream emits a list containing the matching paper
       expect(
         stream,
-        emits(isA<List<QuestionPaper>>()..having((list) => list.length, 'length', 1)),
+        emits(
+          isA<List<QuestionPaper>>().having((list) => list.length, 'length', 1),
+        ),
       );
     });
   });

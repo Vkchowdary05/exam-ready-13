@@ -12,14 +12,14 @@ class PopularCard extends StatefulWidget {
   final VoidCallback onTap;
 
   const PopularCard({
-    Key? key,
+    super.key,
     required this.name,
     required this.description,
     required this.icon,
     required this.color,
     required this.index,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<PopularCard> createState() => _PopularCardState();

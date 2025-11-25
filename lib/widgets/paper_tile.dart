@@ -1,5 +1,6 @@
 /// Reusable paper tile widget with staggered entrance animation.
 /// Displays exam paper title, posted date, and question count.
+library;
 
 import 'package:flutter/material.dart';
 import '../models/mock_data.dart';
@@ -11,12 +12,12 @@ class PaperTile extends StatefulWidget {
   final VoidCallback? onDelete;
 
   const PaperTile({
-    Key? key,
+    super.key,
     required this.paper,
     required this.index,
     this.onTap,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   State<PaperTile> createState() => _PaperTileState();

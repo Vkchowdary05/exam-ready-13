@@ -2,22 +2,13 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:exam_ready/models/paper_model.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Service class for handling all Firebase Firestore operations
 /// related to question paper search and management
 class FirebaseSearchService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late final CloudinaryPublic _cloudinary;
 
-  FirebaseSearchService() {
-    _cloudinary = CloudinaryPublic(
-      dotenv.env['CLOUDINARY_CLOUD_NAME']!,
-      dotenv.env['CLOUDINARY_UPLOAD_PRESET']!,
-      cache: false,
-    );
-  }
+  FirebaseSearchService();
 
   /// Fetch all colleges from Firestore
   Future<List<String>> getColleges() async {
@@ -126,7 +117,7 @@ class FirebaseSearchService {
           .collection('questionPapers')
           .doc(paperId)
           .get();
-      
+
       if (doc.exists) {
         return QuestionPaper.fromFirestore(doc);
       }
@@ -143,8 +134,8 @@ class FirebaseSearchService {
       return _firestore
           .collection('questionPapers')
           .where('subject', isGreaterThanOrEqualTo: searchText)
-          .where('subject', isLessThan: searchText + 'z')
-          .snapshots()
+                    .where('subject', isLessThan: '${searchText}z')
+                    .snapshots()
           .map((snapshot) {
             return snapshot.docs
                 .map((doc) => QuestionPaper.fromFirestore(doc))
@@ -159,7 +150,10 @@ class FirebaseSearchService {
   /// Get total count of papers for statistics
   Future<int> getTotalPapersCount() async {
     try {
-      final snapshot = await _firestore.collection('questionPapers').count().get();
+      final snapshot = await _firestore
+          .collection('questionPapers')
+          .count()
+          .get();
       return snapshot.count ?? 0;
     } catch (e) {
       print('Error getting total papers count: $e');

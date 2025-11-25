@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:exam_ready/services/firebase_service.dart';
 import 'package:exam_ready/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

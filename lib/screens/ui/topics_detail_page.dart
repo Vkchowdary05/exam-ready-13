@@ -12,14 +12,14 @@ class TopicsDetailPage extends StatefulWidget {
   final String examType;
 
   const TopicsDetailPage({
-    Key? key,
+    super.key,
     required this.documentName,
     required this.college,
     required this.branch,
     required this.semester,
     required this.subject,
     required this.examType,
-  }) : super(key: key);
+  });
 
   @override
   State<TopicsDetailPage> createState() => _TopicsDetailPageState();

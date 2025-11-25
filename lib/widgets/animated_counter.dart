@@ -1,5 +1,6 @@
 /// Reusable animated counter widget that counts up to a target value.
 /// Includes scale and opacity animations for a polished entrance effect.
+library;
 
 import 'package:flutter/material.dart';
 
@@ -11,13 +12,13 @@ class AnimatedCounter extends StatefulWidget {
   final TextStyle? labelStyle;
 
   const AnimatedCounter({
-    Key? key,
+    super.key,
     required this.targetValue,
     this.duration = const Duration(milliseconds: 1500),
     this.textStyle,
     this.label = '',
     this.labelStyle,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedCounter> createState() => _AnimatedCounterState();

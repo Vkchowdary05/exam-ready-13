@@ -1,5 +1,6 @@
 /// Mock data models and sample JSON for the exam_ready profile page.
 /// This file contains data classes, JSON serialization, and mock API responses.
+library;
 
 import 'dart:convert';
 

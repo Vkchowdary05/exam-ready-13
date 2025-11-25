@@ -153,6 +153,22 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
     });
   }
 
+  void _navigateToDetails(String documentId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TopicsDetailPage(
+          documentName: documentId,
+          college: _selectedCollege!,
+          branch: _selectedBranch!,
+          semester: _selectedSemester!,
+          subject: _selectedSubject!,
+          examType: _selectedExamType!,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,6 +413,31 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
                 topic['count'],
               );
             }),
+            const SizedBox(height: 16),
+            // View Details Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _navigateToDetails(documentId),
+                icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                label: const Text(
+                  'View Detailed Analysis',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -544,6 +585,12 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
           _buildInfoPoint(
             '🔥 Higher Count',
             'Topics with higher count are asked more frequently',
+            context,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoPoint(
+            '📈 Detailed View',
+            'Tap "View Detailed Analysis" for comprehensive statistics',
             context,
           ),
         ],

@@ -10,12 +10,12 @@ class StatCard extends StatelessWidget {
   final int index;
 
   const StatCard({
-    Key? key,
+    super.key,
     required this.icon,
     required this.number,
     required this.label,
     required this.index,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

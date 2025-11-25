@@ -1,6 +1,5 @@
 // lib/pages/paper_details_page.dart
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exam_ready/riverpod/question_paper_provider.dart';
@@ -270,7 +269,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             label: 'Semester',
             value: paper.semester,
           ),
-          
+
           _buildDetailRow(
             icon: Icons.access_time_rounded,
             label: 'Upload Date',

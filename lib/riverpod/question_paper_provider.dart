@@ -1,6 +1,5 @@
 // lib/riverpod/question_paper_provider.dart
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 // ONLY import ONE of these - choose the correct one for your project
 import 'package:exam_ready/models/question_paper_model.dart';  // Use this one

@@ -26,7 +26,7 @@ final searchResultsProvider =
     });
 
 class SearchQuestionPaperPage extends ConsumerStatefulWidget {
-  const SearchQuestionPaperPage({Key? key}) : super(key: key);
+  const SearchQuestionPaperPage({super.key});
 
   @override
   ConsumerState<SearchQuestionPaperPage> createState() =>
@@ -394,7 +394,7 @@ class FilterCard extends StatelessWidget {
   final VoidCallback onSearch;
 
   const FilterCard({
-    Key? key,
+    super.key,
     required this.selectedCollege,
     required this.selectedBranch,
     required this.selectedSemester,
@@ -406,7 +406,7 @@ class FilterCard extends StatelessWidget {
     required this.onSubjectChanged,
     required this.onExamTypeChanged,
     required this.onSearch,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -528,13 +528,13 @@ class ModernDropdown extends StatelessWidget {
   final ValueChanged<String?>? onChanged;
 
   const ModernDropdown({
-    Key? key,
+    super.key,
     required this.label,
     required this.icon,
     required this.value,
     required this.items,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -561,7 +561,7 @@ class ModernDropdown extends StatelessWidget {
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         items: items
             .map((item) => DropdownMenuItem(value: item, child: Text(item)))
             .toList(),
@@ -594,10 +594,10 @@ class SearchButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const SearchButton({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -669,8 +669,7 @@ class PaperCard extends StatefulWidget {
   final QuestionPaper paper;
   final int index;
 
-  const PaperCard({Key? key, required this.paper, required this.index})
-    : super(key: key);
+  const PaperCard({super.key, required this.paper, required this.index});
 
   @override
   State<PaperCard> createState() => _PaperCardState();
@@ -915,7 +914,7 @@ class _PaperCardState extends State<PaperCard>
 class PaperDetailPage extends StatelessWidget {
   final QuestionPaper paper;
 
-  const PaperDetailPage({Key? key, required this.paper}) : super(key: key);
+  const PaperDetailPage({super.key, required this.paper});
 
   @override
   Widget build(BuildContext context) {

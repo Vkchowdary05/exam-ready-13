@@ -12,7 +12,7 @@ import 'dart:io';
 import 'dart:async';
 
 class QuestionPaperSubmissionPage extends StatefulWidget {
-  const QuestionPaperSubmissionPage({Key? key}) : super(key: key);
+  const QuestionPaperSubmissionPage({super.key});
 
   @override
   State<QuestionPaperSubmissionPage> createState() =>

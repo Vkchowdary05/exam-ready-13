@@ -1,6 +1,7 @@
 import 'package:exam_ready/models/question_paper_model.dart';
 import 'package:exam_ready/screens/ui/profile_page.dart';
 import 'package:exam_ready/screens/ui/search.dart';
+import 'package:exam_ready/screens/ui/topics_search_page.dart';
 import 'package:exam_ready/screens/ui/question_paper_submission_page.dart';
 import 'package:exam_ready/providers/dashboard_provider.dart' as dashboard;
 import 'package:exam_ready/services/firebase_service.dart';
@@ -223,14 +224,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         const SizedBox(width: 16),
         Expanded(
           child: _buildActionCard(
-            'Submit Paper',
+            'Search questions',
             Icons.upload_file,
             const Color(0xFFF093FB),
             const Color(0xFFF5576C),
             () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const QuestionPaperSubmissionPage(),
+                  builder: (context) => const TopicsSearchPage(),
                 ),
               );
             },
