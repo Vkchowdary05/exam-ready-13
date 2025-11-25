@@ -801,10 +801,34 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
   }
 
   Stream<int> _fetchCount(String collection) {
-    return FirebaseService.instance.firestore
-        .collection(collection)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.length);
+    if (collection == 'question_papers') {
+      return FirebaseService.instance.firestore
+          .collection(collection)
+          .snapshots()
+          .map((snapshot) => snapshot.docs.length);
+    }
+
+    if (collection == "colleges") {
+      return Stream.value(30);
+    }
+    if (collection == 'branches') {
+      return Stream.value(20);
+    }
+    if (collection == 'users') {
+      // Fetch the field "user" from the specific document
+      return FirebaseService.instance.firestore
+          .collection('users')
+          .doc('T5ddmSMhEr9C7ef8UZAu')
+          .snapshots()
+          .map((doc) {
+            if (doc.exists && doc.data() != null) {
+              return doc.data()!['user'] ?? 0;
+            }
+            return 0;
+          });
+    }
+    // Optional: handle unsupported collections
+    return Stream.value(0);
   }
 }
 

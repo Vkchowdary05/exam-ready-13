@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:exam_ready/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:exam_ready/theme/app_theme.dart';
@@ -42,6 +44,11 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text.trim(),
       name: _nameController.text.trim(),
     );
+    FirebaseService.instance.firestore
+  .collection('user')
+  .doc('T5ddmSMhEr9C7ef8UZAu')
+  .update({'user': FieldValue.increment(1)});
+
 
     setState(() => _isLoading = false);
 

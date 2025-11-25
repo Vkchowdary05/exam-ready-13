@@ -5,24 +5,24 @@ import 'package:http/http.dart' as http;
 class LlamaService {
   // Groq API Key should not be stored in source. Use environment variable.
   // Set the key in your CI / device environment as 'GROQ_API_KEY'.
-  static const String apiKey = String.fromEnvironment('GROQ_API_KEY', defaultValue: '');
+  static const String apiKey = String.fromEnvironment(
+    'GROQ_API_KEY',
+    defaultValue: '',
+  );
 
   static const String apiUrl =
       "https://api.groq.com/openai/v1/chat/completions";
 
   // Primary + fallback models (use supported production IDs)
   final List<String> _models = [
-    'llama-3.1-8b-instant',   // primary (supported production model)
-    'mixtral-8x7b-32768',     // fallback
+    'llama-3.1-8b-instant', // primary (supported production model)
+    'mixtral-8x7b-32768', // fallback
   ];
 
   Future<List<String>> extractPartBTopics(String extractedText) async {
     final payloadBase = {
       "messages": [
-        {
-          "role": "user",
-          "content": _buildPrompt(extractedText),
-        }
+        {"role": "user", "content": _buildPrompt(extractedText)},
       ],
       // keep deterministic output
       "temperature": 0.1,
@@ -31,10 +31,7 @@ class LlamaService {
 
     for (final model in _models) {
       try {
-        final body = {
-          ...payloadBase,
-          "model": model,
-        };
+        final body = {...payloadBase, "model": model};
 
         print("🤖 Sending text to Groq model '$model' for topic extraction...");
         final response = await http.post(
@@ -57,7 +54,9 @@ class LlamaService {
             final decoded = jsonDecode(cleaned);
             return decoded.cast<String>();
           } catch (e) {
-            print("⚠ JSON parse failed for model $model → fallback regex used.");
+            print(
+              "⚠ JSON parse failed for model $model → fallback regex used.",
+            );
             return _fallbackExtract(cleaned);
           }
         } else {
@@ -67,8 +66,11 @@ class LlamaService {
           final message = err?['error']?['message'] ?? response.body;
 
           // If model was decommissioned, try next model
-          if (code == 'model_decommissioned' || (message as String).contains('decommissioned')) {
-            print("⚠ Model '$model' decommissioned or unsupported. Trying next model...");
+          if (code == 'model_decommissioned' ||
+              (message as String).contains('decommissioned')) {
+            print(
+              "⚠ Model '$model' decommissioned or unsupported. Trying next model...",
+            );
             continue; // try next model in list
           }
 
@@ -166,9 +168,10 @@ $text
   // Replace 'documentText' with actual OCR text in production.
   // ---------------------------
   Future<void> testWithUploadedFile() async {
-    final fileUrl = "/mnt/data/43e345f4-89f4-4d86-b47c-a2a07dabb004.png"; 
+    final fileUrl = "/mnt/data/43e345f4-89f4-4d86-b47c-a2a07dabb004.png";
     // your system/tooling will convert this local path to a URL when making the actual request
-    final testPrompt = "Load the image at: $fileUrl and extract Part B topics (NOT executed here).";
+    final testPrompt =
+        "Load the image at: $fileUrl and extract Part B topics (NOT executed here).";
     try {
       final topics = await extractPartBTopics(testPrompt);
       print("Test topics: $topics");
@@ -178,6 +181,6 @@ $text
   }
 
   // thin wrapper to keep naming parity with earlier service
-Future<List<String>> extractTopicsPartB(String extractedText) =>
+  Future<List<String>> extractTopicsPartB(String extractedText) =>
       extractPartBTopics(extractedText);
 }

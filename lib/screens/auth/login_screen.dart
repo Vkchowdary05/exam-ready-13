@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:exam_ready/services/firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:exam_ready/theme/app_theme.dart';
@@ -69,38 +72,105 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    setState(() => _isGoogleLoading = true);
+  setState(() => _isGoogleLoading = true);
 
-    final result = await _authService.signInWithGoogle();
+  final result = await _authService.signInWithGoogle();
 
-    setState(() => _isGoogleLoading = false);
+  setState(() => _isGoogleLoading = false);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    if (result['success']) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const DashboardScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 600),
+  if (!result['success']) {
+    // sign-in failed: show message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['message'] ?? 'Google sign-in failed'),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    }
+      ),
+    );
+    return;
   }
+
+  try {
+    bool isNewUser = false;
+
+    // 1) If your auth service returned an explicit isNew flag:
+    if (result.containsKey('isNew')) {
+      isNewUser = result['isNew'] == true;
+    }
+
+    // 2) If your auth service returned a UserCredential (recommended)
+    //    Firebase's UserCredential has additionalUserInfo?.isNew
+    else if (result['userCredential'] != null) {
+      final uc = result['userCredential'];
+      // if using firebase_auth UserCredential:
+      if (uc is UserCredential) {
+        isNewUser = uc.additionalUserInfo?.isNewUser ?? false;
+      }
+    }
+
+    // 3) Another common key name could be 'credential' or 'user'
+    else if (result['credential'] != null && result['credential'] is UserCredential) {
+      final uc = result['credential'] as UserCredential;
+      isNewUser = uc.additionalUserInfo?.isNewUser ?? false;
+    }
+
+    // 4) Fallback: check Firestore for existence of a user doc for the current uid.
+    //    If no doc exists, treat as new user.
+    if (!isNewUser) {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null) {
+        final uid = firebaseUser.uid;
+        // Adjust collection name if you store users under a different collection
+        final docRef = FirebaseService.instance.firestore.collection('user').doc(uid);
+        final snap = await docRef.get();
+        if (!snap.exists) {
+          isNewUser = true;
+        }
+      }
+    }
+
+    // If user is new -> increment the counter doc you specified
+    if (isNewUser) {
+      await FirebaseService.instance.firestore
+          .collection('user')
+          .doc('T5ddmSMhEr9C7ef8UZAu')
+          .update({'user': FieldValue.increment(1)});
+    }
+
+    // Navigate to dashboard/home (same behavior whether new or not)
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const DashboardScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  } catch (e, st) {
+    // handle/update error UI
+    debugPrint('Google sign-in post-processing error: $e\n$st');
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('An error occurred while processing sign-in.'),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+}
+
 
   Future<void> _handleForgotPassword() async {
     if (_emailController.text.isEmpty) {

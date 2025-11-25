@@ -1,7 +1,9 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Centralized Firebase service to prevent multiple instance creation
 /// and ensure proper resource management
@@ -26,6 +28,10 @@ class FirebaseService {
   /// Initialize Firebase (should be called once in main.dart)
   static Future<void> initialize() async {
     await Firebase.initializeApp();
+    await FirebaseAppCheck.instance.activate(
+      webProvider: ReCaptchaV3Provider(dotenv.env['RECAPTCHA_V3_SITE_KEY']!),
+      androidProvider: AndroidProvider.playIntegrity,
+    );
   }
 
   /// Check if Firebase is initialized

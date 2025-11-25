@@ -11,7 +11,7 @@ part 'question_paper_provider.g.dart';
 
 /// Provider for Firebase Search Service
 @riverpod
-FirebaseSearchService searchService(ref) {  // Change SearchServiceRef to just 'ref'
+FirebaseSearchService searchService(ref) {
   return FirebaseSearchService();
 }
 
@@ -111,14 +111,14 @@ class SearchFiltersNotifier extends _$SearchFiltersNotifier {
 
 /// Provider for fetching colleges list
 @riverpod
-Future<List<String>> colleges(ref) async {  // Change CollegesRef to just 'ref'
+Future<List<String>> colleges(ref) async {
   final service = ref.watch(searchServiceProvider);
   return service.getColleges();
 }
 
 /// Provider for fetching branches based on selected college
 @riverpod
-Future<List<String>> branches(ref, String? college) async {  // Change BranchesRef to just 'ref'
+Future<List<String>> branches(ref, String? college) async {
   if (college == null || college.isEmpty) return [];
   final service = ref.watch(searchServiceProvider);
   return service.getBranches(college);
@@ -127,7 +127,7 @@ Future<List<String>> branches(ref, String? college) async {  // Change BranchesR
 /// Provider for fetching subjects based on branch and semester
 @riverpod
 Future<List<String>> subjects(
-  ref,  // Change SubjectsRef to just 'ref'
+  ref,
   {
     required String? branch,
     required String? semester,
@@ -142,14 +142,14 @@ Future<List<String>> subjects(
 
 /// Provider for fetching exam types
 @riverpod
-Future<List<String>> examTypes(ref) async {  // Change ExamTypesRef to just 'ref'
+Future<List<String>> examTypes(ref) async {
   final service = ref.watch(searchServiceProvider);
   return service.getExamTypes();
 }
 
 /// Provider for searching question papers with current filters
 @riverpod
-Stream<List<QuestionPaper>> searchResults(ref) {  // Change SearchResultsRef to just 'ref'
+Stream<List<QuestionPaper>> searchResults(ref) {
   final filters = ref.watch(SearchFiltersNotifierProvider);
   final service = ref.watch(searchServiceProvider);
 
@@ -164,21 +164,21 @@ Stream<List<QuestionPaper>> searchResults(ref) {  // Change SearchResultsRef to 
 
 /// Provider for getting a single paper by ID
 @riverpod
-Future<QuestionPaper?> paperDetails(ref, String paperId) async {  // Change PaperDetailsRef to just 'ref'
+Future<QuestionPaper?> paperDetails(ref, String paperId) async {
   final service = ref.watch(searchServiceProvider);
   return service.getQuestionPaperById(paperId);
 }
 
 /// Provider for getting the total number of papers
 @riverpod
-Future<int> totalPapers(ref) async {  // Change TotalPapersRef to just 'ref'
+Future<int> totalPapers(ref) async {
   final service = ref.watch(searchServiceProvider);
   return service.getTotalPapersCount();
 }
 
 /// Provider for getting the recent activity
 @riverpod
-Stream<List<QuestionPaper>> recentActivity(ref) {  // Change RecentActivityRef to just 'ref'
+Stream<List<QuestionPaper>> recentActivity(ref) {
   final service = ref.watch(searchServiceProvider);
   return service.searchQuestionPapers();
 }

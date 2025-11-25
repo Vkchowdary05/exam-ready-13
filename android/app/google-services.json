@@ -12,7 +12,20 @@
           "package_name": "com.example.exam_ready"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "911973583663-24r3gpu79h4nrmr6fsg3t7meaqiansk3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.exam_ready",
+            "certificate_hash": "2699cafc980e6e528d68376fab73aa218e915310"
+          }
+        },
+        {
+          "client_id": "911973583663-ciict72ribfd16shrdnd59sr22vvidre.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDtRTijTZ1xICZlxjPFV5zu6L_1jKHuK7o"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "911973583663-ciict72ribfd16shrdnd59sr22vvidre.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "911973583663-cnous8avme515f6nbfgod2b9vnusmei1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.examReady"
+              }
+            }
+          ]
         }
       }
     }
