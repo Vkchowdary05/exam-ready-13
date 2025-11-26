@@ -5,7 +5,7 @@ import 'package:exam_ready/models/question_paper_model.dart';
 
 class SearchRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _collectionName = 'question_papers'; // Your actual collection name
+  static const String _collectionName = 'submitted_papers'; // Your actual collection name
   static const int _pageSize = 20;
 
   /// Search exam papers with optional filters
