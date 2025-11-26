@@ -12,6 +12,7 @@ import 'package:path/path.dart' as path;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:async';
+import 'dart:developer' as developer;
 
 class QuestionPaperSubmissionPage extends StatefulWidget {
   const QuestionPaperSubmissionPage({Key? key}) : super(key: key);
@@ -451,31 +452,38 @@ class _QuestionPaperSubmissionPageState
 
     try {
       // Step 1: Extract text from image
-      _showSnackBar('🔍 Step 1/6: Extracting text...', isSuccess: true);
       final String extractedText = await _extractTextFromImage(selectedImage!);
-      
       if (extractedText.isEmpty) {
         throw Exception('No text could be extracted from the image');
       }
 
       // Step 2: Upload image to Cloudinary
-      _showSnackBar('📤 Step 2/6: Uploading image...', isSuccess: true);
-      
-      final String? imageUrl = await _cloudinaryService
-          .uploadImage(selectedImage!)
-          .timeout(
-            const Duration(seconds: 60),
-            onTimeout: () => throw TimeoutException('Upload timed out'),
-          );
+      String? imageUrl;
+      try {
+        developer.log('Attempting to upload image to Cloudinary...',
+            name: 'PaperSubmission');
+        imageUrl = await _cloudinaryService.uploadImage(selectedImage!).timeout(
+          const Duration(seconds: 60),
+          onTimeout: () => throw TimeoutException(
+              'Cloudinary upload timed out after 60 seconds'),
+        );
 
-      if (imageUrl == null || imageUrl.isEmpty) {
-        throw Exception('Failed to get image URL from Cloudinary');
+        if (imageUrl == null || imageUrl.isEmpty) {
+          throw Exception('Cloudinary returned an empty or null URL.');
+        }
+        developer.log('Cloudinary upload successful. URL: $imageUrl',
+            name: 'PaperSubmission');
+      } catch (e, s) {
+        developer.log('Cloudinary upload failed.',
+            name: 'PaperSubmission', error: e, stackTrace: s);
+        // Re-throw to be caught by the main try-catch block and show a SnackBar
+        rethrow;
       }
 
       // Step 3: Save to submitted-papers collection
-      _showSnackBar('💾 Step 3/6: Saving to submitted-papers...', isSuccess: true);
-      
-      await _firestoreService
+      _showSnackBar('💾 Step 3/6: Saving to submitted-papers...',
+          isSuccess: true);
+      final String docId = await _firestoreService
           .submitToSubmittedPapers(
             college: selectedCollege!,
             branch: selectedBranch!,
@@ -489,15 +497,20 @@ class _QuestionPaperSubmissionPageState
             onTimeout: () => throw TimeoutException('Database save timed out'),
           );
 
-      // Step 4: Extract Part B topics using ChatGPT
-      _showSnackBar('🤖 Step 4/6: Extracting Part B topics...', isSuccess: true);
+      developer.log('Submission successful. Firestore Document ID: $docId',
+          name: 'PaperSubmission');
+
+      // Step 4: Extract Part B topics using Groq
+      _showSnackBar('🤖 Step 4/6: Extracting Part B topics...',
+          isSuccess: true);
       setState(() => isExtractingTopics = true);
-      
+
       final List<String> topics = await _chatGPTService
           .extractPartBTopics(extractedText)
           .timeout(
             const Duration(seconds: 60),
-            onTimeout: () => throw TimeoutException('Topic extraction timed out'),
+            onTimeout: () =>
+                throw TimeoutException('Topic extraction timed out'),
           );
 
       setState(() {
@@ -506,12 +519,15 @@ class _QuestionPaperSubmissionPageState
       });
 
       if (topics.isEmpty) {
-        throw Exception('No topics could be extracted');
+        // This might not be an error, but we can log it.
+        developer.log('Warning: No topics were extracted by the Groq service.',
+            name: 'PaperSubmission');
       }
 
       // Step 5: Save to question_papers collection with topics
-      _showSnackBar('💾 Step 5/6: Saving topics to question_papers...', isSuccess: true);
-      
+      _showSnackBar('💾 Step 5/6: Saving topics to question_papers...',
+          isSuccess: true);
+
       await _firestoreService
           .submitToQuestionPapers(
             college: selectedCollege!,
@@ -527,13 +543,14 @@ class _QuestionPaperSubmissionPageState
           );
 
       // Step 6: Update questions collection with topic frequency
-      _showSnackBar('📊 Step 6/6: Updating topic frequency...', isSuccess: true);
-      
-      // Create document name: college_branch_semester_subject_examType
-      String documentName = '${selectedCollege}_${selectedBranch}_${selectedSemester}_${selectedSubject}_${selectedExamType}'
-          .replaceAll(' ', '_')
-          .toLowerCase();
-      
+      _showSnackBar('📊 Step 6/6: Updating topic frequency...',
+          isSuccess: true);
+
+      String documentName =
+          '${selectedCollege}_${selectedBranch}_${selectedSemester}_${selectedSubject}_${selectedExamType}'
+              .replaceAll(' ', '_')
+              .toLowerCase();
+
       await _firestoreService
           .updateQuestionsCollection(
             documentName: documentName,
@@ -541,38 +558,47 @@ class _QuestionPaperSubmissionPageState
           )
           .timeout(
             const Duration(seconds: 30),
-            onTimeout: () => throw TimeoutException('Questions update timed out'),
+            onTimeout: () =>
+                throw TimeoutException('Questions update timed out'),
           );
 
       if (!mounted) return;
 
       setState(() => isSubmitting = false);
-      
-      _showSnackBar('✅ All steps completed successfully!', isSuccess: true);
+
+      _showSnackBar('✅ All steps completed successfully! Doc ID: $docId',
+          isSuccess: true);
       _showSuccessDialog(extractedText.length, topics);
       _resetForm();
-
-    } on TimeoutException catch (e) {
+    } on TimeoutException catch (e, s) {
       if (!mounted) return;
       setState(() {
         isSubmitting = false;
         isExtractingTopics = false;
       });
+      developer.log('A timeout occurred during submission.',
+          name: 'PaperSubmission', error: e, stackTrace: s);
       _showSnackBar('⏱️ ${e.message}. Please try again.', isError: true);
-    } on SocketException {
+    } on SocketException catch (e, s) {
       if (!mounted) return;
       setState(() {
         isSubmitting = false;
         isExtractingTopics = false;
       });
-      _showSnackBar('📡 No internet connection', isError: true);
-    } catch (e) {
+      developer.log('A network error occurred.',
+          name: 'PaperSubmission', error: e, stackTrace: s);
+      _showSnackBar('📡 No internet connection. Please check your network.',
+          isError: true);
+    } catch (e, s) {
       if (!mounted) return;
       setState(() {
         isSubmitting = false;
         isExtractingTopics = false;
       });
-      _showSnackBar('❌ Error: ${e.toString()}', isError: true);
+      developer.log('An unexpected error occurred during submission.',
+          name: 'PaperSubmission', error: e, stackTrace: s);
+      _showSnackBar('❌ An unexpected error occurred: ${e.toString()}',
+          isError: true);
     }
   }
 

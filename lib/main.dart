@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'dart:developer' as developer;
 import 'theme/app_theme.dart';
 import 'services/firebase_service.dart';
 
@@ -14,6 +16,11 @@ void main() async {
 
   // Initialize Firebase using centralized service
   await FirebaseService.initialize();
+
+  developer.log(
+    'Firebase App Initialized. Project ID: ${Firebase.app().options.projectId}',
+    name: 'FirebaseInit',
+  );
 
   runApp(const ProviderScope(child: MyApp()));
 }

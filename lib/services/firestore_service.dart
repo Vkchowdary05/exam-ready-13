@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer' as developer;
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> submitQuestionPaper({
+  // FirestoreService
+  Future<String> submitQuestionPaper({
     required String college,
     required String branch,
     required String semester,
@@ -11,36 +13,52 @@ class FirestoreService {
     required String examType,
     required String imageUrl,
   }) async {
-    await _firestore.collection('submitted_papers').add({
-      'college': college,
-      'branch': branch,
-      'semester': semester,
-      'subject': subject,
-      'exam_type': examType,
-      'image_url': imageUrl, // Cloudinary URL
-      'uploaded_at': FieldValue.serverTimestamp(),
-      'status': 'pending', // For admin review
-    });
+    try {
+      developer.log('Attempting to create document in submitted_papers...',
+          name: 'FirestoreService');
+      final docRef = await _firestore.collection('submitted_papers').add({
+        'college': college,
+        'branch': branch,
+        'semester': semester,
+        'subject': subject,
+        'exam_type': examType,
+        'image_url': imageUrl,
+        'uploaded_at': FieldValue.serverTimestamp(),
+        'status': 'pending',
+      });
+      developer.log('Firestore: Document created with ID: ${docRef.id}',
+          name: 'FirestoreService');
+      return docRef.id;
+    } catch (e, s) {
+      developer.log(
+        'Error submitting question paper to Firestore',
+        name: 'FirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
   }
 
-  // Compatibility wrappers used by UI code
-  Future<void> submitToSubmittedPapers({
-    required String college,
-    required String branch,
-    required String semester,
-    required String subject,
-    required String examType,
-    required String imageUrl,
-  }) async {
-    return submitQuestionPaper(
-      college: college,
-      branch: branch,
-      semester: semester,
-      subject: subject,
-      examType: examType,
-      imageUrl: imageUrl,
-    );
-  }
+// update wrapper
+Future<String> submitToSubmittedPapers({
+  required String college,
+  required String branch,
+  required String semester,
+  required String subject,
+  required String examType,
+  required String imageUrl,
+}) async {
+  return submitQuestionPaper(
+    college: college,
+    branch: branch,
+    semester: semester,
+    subject: subject,
+    examType: examType,
+    imageUrl: imageUrl,
+  );
+}
+
 
   Future<void> submitToQuestionPapers({
     required String college,
