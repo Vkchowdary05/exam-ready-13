@@ -37,29 +37,29 @@ A modern, feature-rich Flutter application designed to help users prepare for ex
 
 ### Core Features
 
--   **User Authentication:** Secure sign-up and sign-in with email/password and Google Sign-In.
--   **Question Papers:** Browse and attempt various question papers.
--   **Performance Tracking:** Users can track their scores and performance over time.
--   **Cloud Storage:** Seamlessly sync user data and question papers using Firebase.
--   **Engaging UI:** Smooth animations and a clean, modern user interface.
+- **User Authentication:** Secure sign-up and sign-in with email/password and Google Sign-In.
+- **Question Papers:** Browse and attempt various question papers.
+- **Performance Tracking:** Users can track their scores and performance over time.
+- **Cloud Storage:** Seamlessly sync user data and question papers using Firebase.
+- **Engaging UI:** Smooth animations and a clean, modern user interface.
 
 ### Tech Stack
 
--   **Frontend:** [Flutter](https://flutter.dev/)
--   **Backend:** [Firebase](https://firebase.google.com/) (Authentication, Firestore, Storage)
--   **State Management:** [Riverpod](https://riverpod.dev/), [Bloc](https://bloclibrary.dev/)
--   **Image & Media:** [Cloudinary](https://cloudinary.com/), [Image Picker](https://pub.dev/packages/image_picker)
--   **UI/Animations:** [Lottie](https://pub.dev/packages/lottie), [Flutter Animate](https://pub.dev/packages/flutter_animate)
+- **Frontend:** [Flutter](https://flutter.dev/)
+- **Backend:** [Firebase](https://firebase.google.com/) (Authentication, Firestore, Storage)
+- **State Management:** [Riverpod](https://riverpod.dev/), [Bloc](https://bloclibrary.dev/)
+- **Image & Media:** [Cloudinary](https://cloudinary.com/), [Image Picker](https://pub.dev/packages/image_picker)
+- **UI/Animations:** [Lottie](https://pub.dev/packages/lottie), [Flutter Animate](https://pub.dev/packages/flutter_animate)
 
 ---
 
 ## 📸 Screenshots
 
-*(This section is a placeholder. Add screenshots of your application here.)*
+Here are some previews of the *Exam Ready* app:
 
-| Login Screen                                       | Home Screen                                      |
-| -------------------------------------------------- | ------------------------------------------------ |
-| ![Login Screen](https://via.placeholder.com/300)   | ![Home Screen](https://via.placeholder.com/300)  |
+| Login Screen                                    | Home Screen                                      |
+| ----------------------------------------------- | ------------------------------------------------ |
+| ![Login Screen](assets/Login_page.jpg)          | ![Home Screen](assets/dashbord_page.jpg)         |
 
 ---
 
@@ -69,9 +69,9 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 ### Prerequisites
 
--   [Flutter SDK](https://flutter.dev/docs/get-started/install) (version 3.9.2 or higher)
--   [Firebase CLI](https://firebase.google.com/docs/cli#install_the_firebase_cli)
--   An editor like [VS Code](https://code.visualstudio.com/) or [Android Studio](https://developer.android.com/studio)
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (version 3.9.2 or higher)
+- [Firebase CLI](https://firebase.google.com/docs/cli#install_the_firebase_cli)
+- An editor like [VS Code](https://code.visualstudio.com/) or [Android Studio](https://developer.android.com/studio)
 
 ### Installation
 
@@ -83,11 +83,12 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
 
 2.  **Set up Firebase:**
-    -   Create a new project on the [Firebase Console](https://console.firebase.google.com/).
-    -   Add an Android and/or iOS app to your Firebase project.
-    -   Follow the instructions to download the `google-services.json` file for Android and `GoogleService-Info.plist` for iOS.
-    -   Place `google-services.json` in the `android/app/` directory.
-    -   Place `GoogleService-Info.plist` in the `ios/Runner/` directory.
+
+    - Create a new project on the [Firebase Console](https://console.firebase.google.com/).
+    - Add an Android and/or iOS app to your Firebase project.
+    - Follow the instructions to download the `google-services.json` file for Android and `GoogleService-Info.plist` for iOS.
+    - Place `google-services.json` in the `android/app/` directory.
+    - Place `GoogleService-Info.plist` in the `ios/Runner/` directory.
 
 3.  **Create a `.env` file:**
 
@@ -119,7 +120,8 @@ This will launch the app on your connected device or simulator.
 exam_ready/
 ├── android/
 ├── assets/
-│   └── lottie/
+│   ├── lottie/
+│   └── images/
 ├── ios/
 ├── lib/
 │   ├── config/
@@ -137,6 +139,21 @@ exam_ready/
 ├── test/
 └── pubspec.yaml
 ```
+
+### Assets Management
+
+All static assets (images, animations, etc.) are stored in the `assets/` directory:
+
+- **`assets/lottie/`** - Lottie animation JSON files (login, signup, etc.)
+- **`assets/images/`** - PNG, JPG, and other image files for the UI
+
+To use an image in your code:
+
+```dart
+Image.asset('assets/images/logo.png')
+```
+
+All assets must be declared in `pubspec.yaml` under the `flutter.assets` section.
 
 ---
 
@@ -162,18 +179,18 @@ flutter test
 
 This project is set up for mobile app deployment on the Google Play Store and Apple App Store.
 
--   **Android:** Follow the official Flutter documentation for [building and releasing an Android app](https://flutter.dev/docs/deployment/android).
--   **iOS:** Follow the official Flutter documentation for [building and releasing an iOS app](https://flutter.dev/docs/deployment/ios).
+- **Android:** Follow the official Flutter documentation for [building and releasing an Android app](https://flutter.dev/docs/deployment/android).
+- **iOS:** Follow the official Flutter documentation for [building and releasing an iOS app](https://flutter.dev/docs/deployment/ios).
 
 ---
 
 ## 🗺️ Roadmap
 
-*(This section is a placeholder. Outline the future plans for the project here.)*
+_(This section is a placeholder. Outline the future plans for the project here.)_
 
--   [ ] Feature A
--   [ ] Feature B
--   [ ] Feature C
+- [ ] Feature A
+- [ ] Feature B
+- [ ] Feature C
 
 ---
 
@@ -193,7 +210,7 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 
 ## 📞 Contact
 
-*(This section is a placeholder. Add your contact information here.)*
+_(This section is a placeholder. Add your contact information here.)_
 
 Project Link: [https://github.com/{your-github-username}/{your-repo-name}](https://github.com/{your-github-username}/{your-repo-name})
 

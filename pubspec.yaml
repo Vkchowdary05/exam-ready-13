@@ -81,4 +81,6 @@ flutter:
 
   assets:
     - assets/lottie/
+    - assets/dashbord_page.jpg
+    - assets/Login_page.jpg
     - .env
