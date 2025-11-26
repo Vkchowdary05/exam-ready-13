@@ -51,6 +51,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   permission_handler: ^12.0.1
   device_info_plus: ^12.1.0
+  google_mlkit_text_recognition: ^0.15.0
   
   # Riverpod State Management (Version 3.0 - All packages must match)
   riverpod: ^3.0.3
@@ -61,6 +62,7 @@ dependencies:
   shimmer: ^3.0.0
   fake_cloud_firestore: ^3.1.0
   firebase_app_check: ^0.3.2+10
+  # flutter_dotenv: ^5.0.2
 
   intl: any
   path: any
@@ -75,6 +77,7 @@ dev_dependencies:
   riverpod_lint: ^3.0.3
   build_runner: ^2.4.9
   custom_lint: 0.8.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -83,4 +86,11 @@ flutter:
     - assets/lottie/
     - assets/dashbord_page.jpg
     - assets/Login_page.jpg
+    - assets/Logo.jpg
     - .env
+
+# Launcher icon configuration (generate app icons from a single image)
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/Logo.jpg"

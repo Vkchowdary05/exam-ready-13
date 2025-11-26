@@ -5,14 +5,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:exam_ready/data/dropdown_data.dart';
 import 'package:exam_ready/services/cloudinary_service.dart';
 import 'package:exam_ready/services/firestore_service.dart';
+import 'package:exam_ready/services/groq_service.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:async';
 
 class QuestionPaperSubmissionPage extends StatefulWidget {
-  const QuestionPaperSubmissionPage({super.key});
+  const QuestionPaperSubmissionPage({Key? key}) : super(key: key);
 
   @override
   State<QuestionPaperSubmissionPage> createState() =>
@@ -25,6 +27,8 @@ class _QuestionPaperSubmissionPageState
   final ImagePicker _picker = ImagePicker();
   final CloudinaryService _cloudinaryService = CloudinaryService();
   final FirestoreService _firestoreService = FirestoreService();
+  final GroqService _chatGPTService = GroqService();
+  final TextRecognizer _textRecognizer = TextRecognizer();
 
   File? selectedImage;
   String? selectedCollege;
@@ -37,6 +41,10 @@ class _QuestionPaperSubmissionPageState
   bool isFormValid = false;
   bool isSubmitting = false;
   bool isCompressing = false;
+  bool isExtractingText = false;
+  bool isExtractingTopics = false;
+  String extractedText = '';
+  List<String> extractedTopics = [];
 
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -65,6 +73,7 @@ class _QuestionPaperSubmissionPageState
   @override
   void dispose() {
     _controller.dispose();
+    _textRecognizer.close();
     selectedImage = null;
     super.dispose();
   }
@@ -80,6 +89,41 @@ class _QuestionPaperSubmissionPageState
     });
   }
 
+  /// Extract text from image using ML Kit
+  Future<String> _extractTextFromImage(File imageFile) async {
+    try {
+      setState(() => isExtractingText = true);
+      _showSnackBar('🔍 Extracting text from image...', isSuccess: true);
+
+      final inputImage = InputImage.fromFile(imageFile);
+      final recognizedText = await _textRecognizer.processImage(inputImage);
+
+      String fullText = recognizedText.text;
+      
+      print('📄 Extracted ${recognizedText.blocks.length} text blocks');
+      print('📝 Total text length: ${fullText.length} characters');
+
+      if (fullText.isEmpty) {
+        _showSnackBar('⚠️ No text found in image', isError: true);
+        return '';
+      }
+
+      _showSnackBar(
+        '✅ Extracted ${fullText.length} characters',
+        isSuccess: true,
+      );
+
+      setState(() => isExtractingText = false);
+      return fullText;
+
+    } catch (e) {
+      setState(() => isExtractingText = false);
+      print('❌ Text extraction error: $e');
+      _showSnackBar('Text extraction failed: $e', isError: true);
+      return '';
+    }
+  }
+
   /// Compress image to ensure it's under 5MB
   Future<File?> _compressImage(File imageFile) async {
     try {
@@ -88,7 +132,6 @@ class _QuestionPaperSubmissionPageState
 
       print('📸 Original image size: ${fileSizeMB.toStringAsFixed(2)}MB');
 
-      // If already under 5MB, return original
       if (fileSize <= maxFileSizeInBytes) {
         print('✅ Image already under 5MB, no compression needed');
         return imageFile;
@@ -97,14 +140,12 @@ class _QuestionPaperSubmissionPageState
       setState(() => isCompressing = true);
       _showSnackBar('🔄 Compressing image...', isSuccess: true);
 
-      // Get temporary directory
       final Directory tempDir = await getTemporaryDirectory();
       final String targetPath = path.join(
         tempDir.path,
         'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
 
-      // Calculate quality based on file size
       int quality = 85;
       if (fileSizeMB > 10) {
         quality = 60;
@@ -116,7 +157,6 @@ class _QuestionPaperSubmissionPageState
 
       print('🔧 Compressing with quality: $quality%');
 
-      // Compress the image
       XFile? compressedFile = await FlutterImageCompress.compressAndGetFile(
         imageFile.absolute.path,
         targetPath,
@@ -136,7 +176,6 @@ class _QuestionPaperSubmissionPageState
 
       print('✅ Compressed image size: ${compressedSizeMB.toStringAsFixed(2)}MB');
 
-      // If still too large, compress more aggressively
       if (compressedSize > maxFileSizeInBytes) {
         print('⚠️ Still too large, compressing more aggressively...');
         
@@ -225,6 +264,8 @@ class _QuestionPaperSubmissionPageState
 
         setState(() {
           selectedImage = compressedImage;
+          extractedText = '';
+          extractedTopics = [];
           _validateForm();
         });
 
@@ -409,7 +450,16 @@ class _QuestionPaperSubmissionPageState
     setState(() => isSubmitting = true);
 
     try {
-      _showSnackBar('📤 Uploading image to Cloudinary...', isSuccess: true);
+      // Step 1: Extract text from image
+      _showSnackBar('🔍 Step 1/6: Extracting text...', isSuccess: true);
+      final String extractedText = await _extractTextFromImage(selectedImage!);
+      
+      if (extractedText.isEmpty) {
+        throw Exception('No text could be extracted from the image');
+      }
+
+      // Step 2: Upload image to Cloudinary
+      _showSnackBar('📤 Step 2/6: Uploading image...', isSuccess: true);
       
       final String? imageUrl = await _cloudinaryService
           .uploadImage(selectedImage!)
@@ -422,10 +472,11 @@ class _QuestionPaperSubmissionPageState
         throw Exception('Failed to get image URL from Cloudinary');
       }
 
-      _showSnackBar('💾 Saving to database...', isSuccess: true);
+      // Step 3: Save to submitted-papers collection
+      _showSnackBar('💾 Step 3/6: Saving to submitted-papers...', isSuccess: true);
       
       await _firestoreService
-          .submitQuestionPaper(
+          .submitToSubmittedPapers(
             college: selectedCollege!,
             branch: selectedBranch!,
             semester: selectedSemester!,
@@ -438,25 +489,89 @@ class _QuestionPaperSubmissionPageState
             onTimeout: () => throw TimeoutException('Database save timed out'),
           );
 
+      // Step 4: Extract Part B topics using ChatGPT
+      _showSnackBar('🤖 Step 4/6: Extracting Part B topics...', isSuccess: true);
+      setState(() => isExtractingTopics = true);
+      
+      final List<String> topics = await _chatGPTService
+          .extractPartBTopics(extractedText)
+          .timeout(
+            const Duration(seconds: 60),
+            onTimeout: () => throw TimeoutException('Topic extraction timed out'),
+          );
+
+      setState(() {
+        extractedTopics = topics;
+        isExtractingTopics = false;
+      });
+
+      if (topics.isEmpty) {
+        throw Exception('No topics could be extracted');
+      }
+
+      // Step 5: Save to question_papers collection with topics
+      _showSnackBar('💾 Step 5/6: Saving topics to question_papers...', isSuccess: true);
+      
+      await _firestoreService
+          .submitToQuestionPapers(
+            college: selectedCollege!,
+            branch: selectedBranch!,
+            semester: selectedSemester!,
+            subject: selectedSubject!,
+            examType: selectedExamType!,
+            topics: topics,
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('Database save timed out'),
+          );
+
+      // Step 6: Update questions collection with topic frequency
+      _showSnackBar('📊 Step 6/6: Updating topic frequency...', isSuccess: true);
+      
+      // Create document name: college_branch_semester_subject_examType
+      String documentName = '${selectedCollege}_${selectedBranch}_${selectedSemester}_${selectedSubject}_${selectedExamType}'
+          .replaceAll(' ', '_')
+          .toLowerCase();
+      
+      await _firestoreService
+          .updateQuestionsCollection(
+            documentName: documentName,
+            topics: topics,
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('Questions update timed out'),
+          );
+
       if (!mounted) return;
 
       setState(() => isSubmitting = false);
       
-      _showSnackBar('✅ Paper submitted successfully!', isSuccess: true);
-      _showSuccessDialog();
+      _showSnackBar('✅ All steps completed successfully!', isSuccess: true);
+      _showSuccessDialog(extractedText.length, topics);
       _resetForm();
 
     } on TimeoutException catch (e) {
       if (!mounted) return;
-      setState(() => isSubmitting = false);
+      setState(() {
+        isSubmitting = false;
+        isExtractingTopics = false;
+      });
       _showSnackBar('⏱️ ${e.message}. Please try again.', isError: true);
     } on SocketException {
       if (!mounted) return;
-      setState(() => isSubmitting = false);
+      setState(() {
+        isSubmitting = false;
+        isExtractingTopics = false;
+      });
       _showSnackBar('📡 No internet connection', isError: true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => isSubmitting = false);
+      setState(() {
+        isSubmitting = false;
+        isExtractingTopics = false;
+      });
       _showSnackBar('❌ Error: ${e.toString()}', isError: true);
     }
   }
@@ -471,11 +586,13 @@ class _QuestionPaperSubmissionPageState
       availableSubjects = [];
       selectedSubject = null;
       selectedExamType = null;
+      extractedText = '';
+      extractedTopics = [];
       isFormValid = false;
     });
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(int textLength, List<String> topics) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -516,15 +633,64 @@ class _QuestionPaperSubmissionPageState
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Your question paper has been compressed, uploaded to Cloudinary, and saved successfully!',
+              Text(
+                'Your question paper has been:\n'
+                '✓ Image uploaded to Cloudinary\n'
+                '✓ Saved to submitted-papers\n'
+                '✓ Text extracted ($textLength chars)\n'
+                '✓ ${topics.length} Part B topics identified\n'
+                '✓ Saved to question_papers\n'
+                '✓ Topic frequency updated',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
+                style: const TextStyle(
+                  fontSize: 14,
                   color: Colors.white70,
                   height: 1.5,
                 ),
               ),
+              if (topics.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Extracted Topics:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...topics.take(5).map((topic) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '• $topic',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      )),
+                      if (topics.length > 5)
+                        Text(
+                          '... and ${topics.length - 5} more',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white60,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -732,7 +898,7 @@ class _QuestionPaperSubmissionPageState
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Upload & share exam papers',
+                  'AI-powered topic extraction',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
@@ -748,7 +914,7 @@ class _QuestionPaperSubmissionPageState
 
   Widget _buildImageUploadCard() {
     return GestureDetector(
-      onTap: isCompressing ? null : _showImageSourceDialog,
+      onTap: (isCompressing || isExtractingText || isExtractingTopics) ? null : _showImageSourceDialog,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         height: 240,
@@ -781,7 +947,7 @@ class _QuestionPaperSubmissionPageState
             ),
           ],
         ),
-        child: isCompressing
+        child: (isCompressing || isExtractingText || isExtractingTopics)
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -790,9 +956,11 @@ class _QuestionPaperSubmissionPageState
                     strokeWidth: 3,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Compressing Image...',
-                    style: TextStyle(
+                  Text(
+                    isCompressing ? 'Compressing Image...' : 
+                    isExtractingText ? 'Extracting Text...' : 
+                    'Analyzing Topics...',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1A1A2E),
@@ -800,7 +968,11 @@ class _QuestionPaperSubmissionPageState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Please wait while we optimize your image',
+                    isCompressing 
+                        ? 'Please wait while we optimize your image'
+                        : isExtractingText
+                        ? 'Reading text from the question paper'
+                        : 'AI is extracting Part B topics',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -858,7 +1030,7 @@ class _QuestionPaperSubmissionPageState
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Auto-compressed to 5MB • JPG, PNG, PDF',
+                          'AI Topic Extraction • Auto Compress',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[700],
@@ -886,6 +1058,8 @@ class _QuestionPaperSubmissionPageState
                           onTap: () {
                             setState(() {
                               selectedImage = null;
+                              extractedText = '';
+                              extractedTopics = [];
                               _validateForm();
                             });
                           },

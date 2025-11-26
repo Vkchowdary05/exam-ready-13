@@ -1,14 +1,13 @@
-// lib/services/llama_service.dart
+// lib/services/groq_service.dart
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-class LlamaService {
-  // Groq API Key should not be stored in source. Use environment variable.
-  // Set the key in your CI / device environment as 'GROQ_API_KEY'.
-  static const String apiKey = String.fromEnvironment(
-    'GROQ_API_KEY',
-    defaultValue: '',
-  );
+class GroqService {
+  // Groq API Key is loaded from the .env file
+  static final String apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
+
+  static final _ = print('Loaded GROQ_API_KEY from .env: ($apiKey)');
 
   static const String apiUrl =
       "https://api.groq.com/openai/v1/chat/completions";
@@ -102,7 +101,7 @@ IMPORTANT RULES:
 3) IF A SINGLE QUESTION CONTAINS MULTIPLE TOPICS, SPLIT THEM AND RETURN EACH TOPIC AS A SEPARATE ARRAY ITEM.
 4) REMOVE DUPLICATES.
 5) NO NUMBERS, NO BULLETS, NO LEADING/TAILING TEXT.
-6) Example: ["MOBILE ETIQUETTE","COMMUNICATION SKILLS"]
+6) Example: [\"MOBILE ETIQUETTE\",\"COMMUNICATION SKILLS\"]
 
 Question paper text:
 $text
