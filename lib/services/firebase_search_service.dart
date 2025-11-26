@@ -71,7 +71,7 @@ class FirebaseSearchService {
     String? examType,
   }) {
     try {
-      Query query = _firestore.collection('questionPapers');
+      Query query = _firestore.collection('submitted_papers');
 
       // Apply filters based on provided parameters
       if (college != null && college.isNotEmpty) {
@@ -114,7 +114,7 @@ class FirebaseSearchService {
   Future<QuestionPaper?> getQuestionPaperById(String paperId) async {
     try {
       final doc = await _firestore
-          .collection('questionPapers')
+          .collection('submitted_papers')
           .doc(paperId)
           .get();
 
@@ -132,7 +132,7 @@ class FirebaseSearchService {
   Stream<List<QuestionPaper>> searchBySubjectName(String searchText) {
     try {
       return _firestore
-          .collection('questionPapers')
+          .collection('submitted_papers')
           .where('subject', isGreaterThanOrEqualTo: searchText)
                     .where('subject', isLessThan: '${searchText}z')
                     .snapshots()
@@ -151,7 +151,7 @@ class FirebaseSearchService {
   Future<int> getTotalPapersCount() async {
     try {
       final snapshot = await _firestore
-          .collection('questionPapers')
+          .collection('submitted_papers')
           .count()
           .get();
       return snapshot.count ?? 0;
@@ -165,7 +165,7 @@ class FirebaseSearchService {
   Stream<List<QuestionPaper>> getMyPapers(String userId) {
     try {
       return _firestore
-          .collection('questionPapers')
+          .collection('submitted_papers')
           .where('uploadedBy', isEqualTo: userId)
           .orderBy('uploadedAt', descending: true)
           .snapshots()

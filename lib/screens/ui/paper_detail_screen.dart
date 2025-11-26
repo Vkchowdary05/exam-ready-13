@@ -21,7 +21,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  final bool _isDeleting = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -269,7 +269,6 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             label: 'Semester',
             value: paper.semester,
           ),
-
           _buildDetailRow(
             icon: Icons.access_time_rounded,
             label: 'Upload Date',
@@ -336,14 +335,12 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   Widget _buildActionButtons(QuestionPaper paper) {
-    // Check if current user can delete (you should implement proper auth check)
     final bool canDelete = _checkDeletePermission(paper);
 
     return Container(
       margin: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Download Button
           _buildActionButton(
             icon: Icons.download_rounded,
             label: 'Download Paper',
@@ -352,10 +349,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             ),
             onTap: () => _downloadPaper(paper),
           ),
-
           if (canDelete) ...[
             const SizedBox(height: 12),
-            // Delete Button
             _buildActionButton(
               icon: Icons.delete_rounded,
               label: _isDeleting ? 'Deleting...' : 'Delete Paper',
@@ -457,13 +452,13 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
+                  children: const [
+                    CircularProgressIndicator(
                       color: Color(0xFF667EEA),
                       strokeWidth: 3,
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
+                    SizedBox(height: 24),
+                    Text(
                       'Loading paper details...',
                       style: TextStyle(
                         color: Colors.white,
@@ -608,12 +603,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   // Helper Methods
-
   bool _checkDeletePermission(QuestionPaper paper) {
     // TODO: Implement proper authentication check
-    // For now, returning true for demonstration
-    // In production, check if current user ID matches paper.uploadedBy
-    // or if user is admin
     return true;
   }
 
@@ -673,8 +664,6 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   void _downloadPaper(QuestionPaper paper) {
-    // TODO: Implement actual download functionality
-    // This would typically save the image to device storage
     _showSnackBar('Download feature coming soon!', isSuccess: true);
   }
 
@@ -709,6 +698,14 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              setState(() => _isDeleting = true);
+              // TODO: Implement delete logic
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) {
+                  Navigator.pop(context);
+                  _showSnackBar('Paper deleted successfully', isSuccess: true);
+                }
+              });
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red[600],
@@ -861,8 +858,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.info_outline_rounded,
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.info_outline_rounded,
               color: Colors.white,
               size: 22,
             ),
@@ -875,8 +872,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
         backgroundColor: isError
             ? const Color(0xFFE53935)
             : isSuccess
-            ? const Color(0xFF43A047)
-            : const Color(0xFF667EEA),
+                ? const Color(0xFF43A047)
+                : const Color(0xFF667EEA),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),

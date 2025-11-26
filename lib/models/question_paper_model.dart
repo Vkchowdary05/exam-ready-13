@@ -1,8 +1,11 @@
+// lib/models/question_paper.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
-/// Represents a Question Paper uploaded to the system
-/// Uses Equatable for value-based equality comparisons
+/// Unified QuestionPaper model combining fields and helpers from both
+/// previous implementations. Supports flexible Firestore field names
+/// (snake_case and camelCase) and multiple timestamp formats.
 class QuestionPaper extends Equatable {
   final String id;
   final String college;
@@ -10,13 +13,15 @@ class QuestionPaper extends Equatable {
   final String semester;
   final String subject;
   final String examType;
-  final String imageUrl; // Cloudinary image URL
+  final String imageUrl;
   final String pdfUrl;
   final String year;
-  final DateTime uploadedAt;
+  final DateTime uploadedAt; // canonical upload timestamp
   final String status; // pending, approved, rejected
   final int views;
   final int downloads;
+  final int likes;
+  final String userId;
 
   const QuestionPaper({
     required this.id,
@@ -26,82 +31,128 @@ class QuestionPaper extends Equatable {
     required this.subject,
     required this.examType,
     required this.imageUrl,
-    this.pdfUrl = '', // Default empty string since not all papers have PDFs yet
+    this.pdfUrl = '',
     this.year = '',
     required this.uploadedAt,
     this.status = 'pending',
     this.views = 0,
     this.downloads = 0,
+    this.likes = 0,
+    this.userId = '',
   });
 
-  /// ✅ Create a QuestionPaper from a Firestore document
+  /// Flexible factory from Firestore DocumentSnapshot that handles both
+  /// snake_case and camelCase field names and multiple timestamp formats.
   factory QuestionPaper.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final raw = doc.data();
+    final data = (raw is Map<String, dynamic>) ? raw : <String, dynamic>{};
+
+    // Helper to read with fallback keys
+    T? read<T>(List<String> keys, {T? defaultValue}) {
+      for (final k in keys) {
+        if (data.containsKey(k) && data[k] != null) {
+          return data[k] as T;
+        }
+      }
+      return defaultValue;
+    }
+
+    // Determine timestamp: try multiple possible keys
+    final dynamic uploadedRaw = read<dynamic>(['uploaded_at', 'uploadedAt', 'timestamp', 'createdAt']);
+    final DateTime uploadedAt = _parseTimestamp(uploadedRaw);
+
     return QuestionPaper(
       id: doc.id,
-      college: data['college'] ?? 'Unknown',
-      branch: data['branch'] ?? 'Unknown',
-      semester: data['semester'] ?? 'Unknown',
-      subject: data['subject'] ?? 'Unknown',
-      examType: data['exam_type'] ?? 'Unknown',
-      imageUrl: data['image_url'] ?? '',
-      pdfUrl: data['pdf_url'] ?? '',
-      year: data['year'] ?? '',
-      uploadedAt: _parseTimestamp(data['uploaded_at']),
-      status: data['status'] ?? 'pending',
-      views: data['views'] ?? 0,
-      downloads: data['downloads'] ?? 0,
+      college: (read<String>(['college']) ?? 'Unknown'),
+      branch: (read<String>(['branch']) ?? 'Unknown'),
+      semester: (read<String>(['semester']) ?? 'Unknown'),
+      subject: (read<String>(['subject']) ?? 'Unknown'),
+      examType: (read<String>(['exam_type', 'examType']) ?? 'Unknown'),
+      imageUrl: (read<String>(['image_url', 'imageUrl']) ?? ''),
+      pdfUrl: (read<String>(['pdf_url', 'pdfUrl']) ?? ''),
+      year: (read<String>(['year']) ?? ''),
+      uploadedAt: uploadedAt,
+      status: (read<String>(['status']) ?? 'pending'),
+      views: (read<int>(['views']) ?? 0),
+      downloads: (read<int>(['downloads']) ?? 0),
+      likes: (read<int>(['likes']) ?? 0),
+      userId: (read<String>(['userId', 'user_id', 'uploadedBy']) ?? ''),
     );
   }
 
-  /// ✅ Create a QuestionPaper from a raw map
-  factory QuestionPaper.fromMap(Map<String, dynamic> data, String id) {
+  /// Factory from a plain Map (e.g., decoded JSON) with an explicit id
+  factory QuestionPaper.fromMap(Map<String, dynamic> map, String id) {
+    // Same flexible parsing as above
+    dynamic read(List<String> keys) {
+      for (final k in keys) {
+        if (map.containsKey(k) && map[k] != null) return map[k];
+      }
+      return null;
+    }
+
+    final uploadedRaw = read(['uploaded_at', 'uploadedAt', 'timestamp', 'createdAt']);
+    final uploadedAt = _parseTimestamp(uploadedRaw);
+
     return QuestionPaper(
       id: id,
-      college: data['college'] ?? 'Unknown',
-      branch: data['branch'] ?? 'Unknown',
-      semester: data['semester'] ?? 'Unknown',
-      subject: data['subject'] ?? 'Unknown',
-      examType: data['exam_type'] ?? 'Unknown',
-      imageUrl: data['image_url'] ?? '',
-      pdfUrl: data['pdf_url'] ?? '',
-      year: data['year'] ?? '',
-      uploadedAt: _parseTimestamp(data['uploaded_at']),
-      status: data['status'] ?? 'pending',
-      views: data['views'] ?? 0,
-      downloads: data['downloads'] ?? 0,
+      college: (read(['college']) as String?) ?? 'Unknown',
+      branch: (read(['branch']) as String?) ?? 'Unknown',
+      semester: (read(['semester']) as String?) ?? 'Unknown',
+      subject: (read(['subject']) as String?) ?? 'Unknown',
+      examType: (read(['exam_type', 'examType']) as String?) ?? 'Unknown',
+      imageUrl: (read(['image_url', 'imageUrl']) as String?) ?? '',
+      pdfUrl: (read(['pdf_url', 'pdfUrl']) as String?) ?? '',
+      year: (read(['year']) as String?) ?? '',
+      uploadedAt: uploadedAt,
+      status: (read(['status']) as String?) ?? 'pending',
+      views: (read(['views']) as int?) ?? (read(['views']) is String ? int.tryParse(read(['views'])) ?? 0 : 0),
+      downloads: (read(['downloads']) as int?) ?? 0,
+      likes: (read(['likes']) as int?) ?? 0,
+      userId: (read(['userId', 'user_id', 'uploadedBy']) as String?) ?? '',
     );
   }
 
-  /// ✅ Convert QuestionPaper to a Firestore-compatible map
+  /// Convert to Firestore-friendly map (uses camelCase keys).
+  /// Use this when writing/updating documents; consistent naming helps.
   Map<String, dynamic> toMap() {
     return {
       'college': college,
       'branch': branch,
       'semester': semester,
       'subject': subject,
-      'exam_type': examType,
-      'image_url': imageUrl,
-      'pdf_url': pdfUrl,
+      'examType': examType,
+      'imageUrl': imageUrl,
+      'pdfUrl': pdfUrl,
       'year': year,
-      'uploaded_at': Timestamp.fromDate(uploadedAt),
+      'uploadedAt': Timestamp.fromDate(uploadedAt),
       'status': status,
       'views': views,
       'downloads': downloads,
+      'likes': likes,
+      'userId': userId,
     };
   }
 
-  /// ✅ Helper method to safely parse Firestore Timestamp
+  /// Defensive timestamp parser: supports Timestamp, DateTime, int, String
   static DateTime _parseTimestamp(dynamic timestamp) {
-    if (timestamp is Timestamp) {
-      return timestamp.toDate();
-    } else if (timestamp is DateTime) {
-      return timestamp;
+    if (timestamp == null) return DateTime.now();
+
+    if (timestamp is Timestamp) return timestamp.toDate();
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is int) return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    if (timestamp is String) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (e) {
+        // try to parse as integer string (ms since epoch)
+        final ms = int.tryParse(timestamp);
+        if (ms != null) return DateTime.fromMillisecondsSinceEpoch(ms);
+      }
     }
     return DateTime.now();
   }
 
-  /// ✅ Create a copy with modified fields (immutability pattern)
+  /// CopyWith for immutability
   QuestionPaper copyWith({
     String? id,
     String? college,
@@ -116,6 +167,8 @@ class QuestionPaper extends Equatable {
     String? status,
     int? views,
     int? downloads,
+    int? likes,
+    String? userId,
   }) {
     return QuestionPaper(
       id: id ?? this.id,
@@ -131,40 +184,18 @@ class QuestionPaper extends Equatable {
       status: status ?? this.status,
       views: views ?? this.views,
       downloads: downloads ?? this.downloads,
+      likes: likes ?? this.likes,
+      userId: userId ?? this.userId,
     );
   }
 
-  /// ✅ Equatable properties for value-based equality
-  @override
-  List<Object?> get props => [
-        id,
-        college,
-        branch,
-        semester,
-        subject,
-        examType,
-        imageUrl,
-        pdfUrl,
-        year,
-        uploadedAt,
-        status,
-        views,
-        downloads,
-      ];
+  // ---------- Helpers & computed properties ----------
 
-  /// ✅ Helper method to check if paper has PDF
   bool get hasPdf => pdfUrl.isNotEmpty;
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isRejected => status.toLowerCase() == 'rejected';
 
-  /// ✅ Helper method to check if paper is approved
-  bool get isApproved => status == 'approved';
-
-  /// ✅ Helper method to check if paper is pending
-  bool get isPending => status == 'pending';
-
-  /// ✅ Helper method to check if paper is rejected
-  bool get isRejected => status == 'rejected';
-
-  /// ✅ Get formatted upload date
   String get formattedUploadDate {
     final now = DateTime.now();
     final difference = now.difference(uploadedAt);
@@ -184,115 +215,74 @@ class QuestionPaper extends Equatable {
     }
   }
 
-  @override
-  String toString() => 'QuestionPaper(id: $id, subject: $subject, examType: $examType)';
-}
+  /// Similar to previous implementation: "Just now", "5m ago", "2d ago" or date
+  String get shortFormattedDate {
+    final now = DateTime.now();
+    final difference = now.difference(uploadedAt);
 
-//
-// ──────────────────────────────────────────────
-// FILTER & STATE CLASSES
-// ──────────────────────────────────────────────
-//
-
-/// Dropdown filter options used in search/filter UI
-class FilterOptions extends Equatable {
-  final List<String> colleges;
-  final List<String> branches;
-  final List<String> semesters;
-  final List<String> subjects;
-  final List<String> examTypes;
-
-  const FilterOptions({
-    this.colleges = const [],
-    this.branches = const [],
-    this.semesters = const [],
-    this.subjects = const [],
-    this.examTypes = const [],
-  });
-
-  FilterOptions copyWith({
-    List<String>? colleges,
-    List<String>? branches,
-    List<String>? semesters,
-    List<String>? subjects,
-    List<String>? examTypes,
-  }) {
-    return FilterOptions(
-      colleges: colleges ?? this.colleges,
-      branches: branches ?? this.branches,
-      semesters: semesters ?? this.semesters,
-      subjects: subjects ?? this.subjects,
-      examTypes: examTypes ?? this.examTypes,
-    );
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) return 'Just now';
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${uploadedAt.day} ${months[uploadedAt.month - 1]} ${uploadedAt.year}';
+    }
   }
 
-  /// Check if any filters are active
-  bool get hasActiveFilters =>
-      colleges.isNotEmpty ||
-      branches.isNotEmpty ||
-      semesters.isNotEmpty ||
-      subjects.isNotEmpty ||
-      examTypes.isNotEmpty;
+  bool get isRecent {
+    final now = DateTime.now();
+    final difference = now.difference(uploadedAt);
+    return difference.inDays <= 7;
+  }
 
-  /// Clear all filters
-  FilterOptions clearAll() {
-    return const FilterOptions();
+  bool get isPopular => likes > 10;
+
+  int? get semesterNumber {
+    final match = RegExp(r'\d+').firstMatch(semester);
+    if (match != null) return int.tryParse(match.group(0)!);
+    return null;
+  }
+
+  String get examTypeAbbr {
+    final lower = examType.toLowerCase();
+    if (lower.contains('mid')) {
+      final match = RegExp(r'\d+').firstMatch(examType);
+      if (match != null) return 'M${match.group(0)}';
+      return 'Mid';
+    } else if (lower.contains('end')) {
+      return 'End';
+    } else if (lower.contains('final')) {
+      return 'Final';
+    }
+    return examType;
   }
 
   @override
-  List<Object?> get props => [colleges, branches, semesters, subjects, examTypes];
+  List<Object?> get props => [
+        id,
+        college,
+        branch,
+        semester,
+        subject,
+        examType,
+        imageUrl,
+        pdfUrl,
+        year,
+        uploadedAt,
+        status,
+        views,
+        downloads,
+        likes,
+        userId,
+      ];
 
   @override
-  String toString() => 'FilterOptions(colleges: $colleges, branches: $branches)';
-}
-
-/// State model used by your Provider/Bloc for Question Papers
-class QuestionPaperState extends Equatable {
-  final List<QuestionPaper> papers;
-  final FilterOptions filterOptions;
-  final bool isLoading;
-  final String? error;
-
-  const QuestionPaperState({
-    this.papers = const [],
-    this.filterOptions = const FilterOptions(),
-    this.isLoading = false,
-    this.error,
-  });
-
-  QuestionPaperState copyWith({
-    List<QuestionPaper>? papers,
-    FilterOptions? filterOptions,
-    bool? isLoading,
-    String? error,
-  }) {
-    return QuestionPaperState(
-      papers: papers ?? this.papers,
-      filterOptions: filterOptions ?? this.filterOptions,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+  String toString() {
+    return 'QuestionPaper(id: $id, subject: $subject, examType: $examType, semester: $semester, college: $college, branch: $branch, likes: $likes, userId: $userId)';
   }
-
-  /// Helper to clear error state
-  QuestionPaperState clearError() {
-    return copyWith(error: null);
-  }
-
-  /// Helper to check if there are papers
-  bool get hasPapers => papers.isNotEmpty;
-
-  /// Helper to get approved papers only
-  List<QuestionPaper> get approvedPapers =>
-      papers.where((paper) => paper.isApproved).toList();
-
-  /// Helper to get pending papers count
-  int get pendingCount => papers.where((paper) => paper.isPending).length;
-
-  @override
-  List<Object?> get props => [papers, filterOptions, isLoading, error];
-
-  @override
-  String toString() =>
-      'QuestionPaperState(papers: ${papers.length}, isLoading: $isLoading, error: $error)';
 }
