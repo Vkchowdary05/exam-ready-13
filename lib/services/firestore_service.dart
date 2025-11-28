@@ -1,30 +1,52 @@
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> submitQuestionPaper({
+  /// Preferred submit method — returns the created document ID.
+  Future<String> submitQuestionPaper({
     required String college,
     required String branch,
     required String semester,
     required String subject,
     required String examType,
     required String imageUrl,
+    String? userId,
   }) async {
-    await _firestore.collection('submitted_papers').add({
-      'college': college,
-      'branch': branch,
-      'semester': semester,
-      'subject': subject,
-      'exam_type': examType,
-      'image_url': imageUrl, // Cloudinary URL
-      'uploaded_at': FieldValue.serverTimestamp(),
-      'status': 'pending', // For admin review
-    });
+    try {
+      developer.log('Attempting to create document in submitted_papers...', name: 'FirestoreService');
+      final serverTs = FieldValue.serverTimestamp();
+
+      final docRef = await _firestore.collection('submitted_papers').add({
+        // canonical
+        'college': college,
+        'branch': branch,
+        'semester': semester,
+        'subject': subject,
+        'examType': examType,
+        'imageUrl': imageUrl,
+        'uploadedAt': serverTs,
+        'timestamp': serverTs,
+        'status': 'pending',
+        // compatibility
+        'exam_type': examType,
+        'image_url': imageUrl,
+        'uploaded_at': serverTs,
+        if (userId != null) 'userId': userId,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+
+      developer.log('Firestore: Document created with ID: ${docRef.id}', name: 'FirestoreService');
+      return docRef.id;
+    } catch (e, s) {
+      developer.log('Error submitting question paper to Firestore', name: 'FirestoreService', error: e, stackTrace: s);
+      rethrow;
+    }
   }
 
   // Compatibility wrappers used by UI code
-  Future<void> submitToSubmittedPapers({
+  Future<String> submitToSubmittedPapers({
     required String college,
     required String branch,
     required String semester,
