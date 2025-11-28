@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // FirestoreService
+  /// Preferred submit method — returns the created document ID.
   Future<String> submitQuestionPaper({
     required String college,
     required String branch,
@@ -12,53 +12,57 @@ class FirestoreService {
     required String subject,
     required String examType,
     required String imageUrl,
+    String? userId,
   }) async {
     try {
-      developer.log('Attempting to create document in submitted_papers...',
-          name: 'FirestoreService');
+      developer.log('Attempting to create document in submitted_papers...', name: 'FirestoreService');
+      final serverTs = FieldValue.serverTimestamp();
+
       final docRef = await _firestore.collection('submitted_papers').add({
+        // canonical
         'college': college,
         'branch': branch,
         'semester': semester,
         'subject': subject,
+        'examType': examType,
+        'imageUrl': imageUrl,
+        'uploadedAt': serverTs,
+        'timestamp': serverTs,
+        'status': 'pending',
+        // compatibility
         'exam_type': examType,
         'image_url': imageUrl,
-        'uploaded_at': FieldValue.serverTimestamp(),
-        'status': 'pending',
+        'uploaded_at': serverTs,
+        if (userId != null) 'userId': userId,
+        'createdAt': DateTime.now().toIso8601String(),
       });
-      developer.log('Firestore: Document created with ID: ${docRef.id}',
-          name: 'FirestoreService');
+
+      developer.log('Firestore: Document created with ID: ${docRef.id}', name: 'FirestoreService');
       return docRef.id;
     } catch (e, s) {
-      developer.log(
-        'Error submitting question paper to Firestore',
-        name: 'FirestoreService',
-        error: e,
-        stackTrace: s,
-      );
+      developer.log('Error submitting question paper to Firestore', name: 'FirestoreService', error: e, stackTrace: s);
       rethrow;
     }
   }
 
-// update wrapper
-Future<String> submitToSubmittedPapers({
-  required String college,
-  required String branch,
-  required String semester,
-  required String subject,
-  required String examType,
-  required String imageUrl,
-}) async {
-  return submitQuestionPaper(
-    college: college,
-    branch: branch,
-    semester: semester,
-    subject: subject,
-    examType: examType,
-    imageUrl: imageUrl,
-  );
-}
-
+  // Compatibility wrappers used by UI code
+  Future<String> submitToSubmittedPapers({
+    required String college,
+    required String branch,
+    required String semester,
+    required String subject,
+    required String examType,
+    required String imageUrl,
+  }) async {
+    return submitQuestionPaper(
+      college: college,
+      branch: branch,
+      semester: semester,
+      subject: subject,
+      examType: examType,
+      imageUrl: imageUrl,
+    );
+  }
 
   Future<void> submitToQuestionPapers({
     required String college,
