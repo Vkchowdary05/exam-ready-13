@@ -33,15 +33,163 @@ A modern, feature-rich Flutter application designed to help users prepare for ex
 
 ## About the Project
 
-**Exam Ready** is a comprehensive mobile application built with Flutter, designed to provide students with a robust platform for exam preparation. It features user authentication, question papers, and performance tracking, making studying efficient and engaging.
+**Exam Ready** is a Flutter app to help students find, upload, and analyze past question papers. The app is a client-first mobile/web/desktop Flutter project that integrates Firebase for auth, Firestore and Storage, Cloudinary for image hosting, and an LLM-backed service for topic extraction.
 
-### Core Features
+## Features
 
-- **User Authentication:** Secure sign-up and sign-in with email/password and Google Sign-In.
-- **Question Papers:** Browse and attempt various question papers.
-- **Performance Tracking:** Users can track their scores and performance over time.
-- **Cloud Storage:** Seamlessly sync user data and question papers using Firebase.
-- **Engaging UI:** Smooth animations and a clean, modern user interface.
+### Core features
+
+- **Firebase-backed Authentication:** Email/password plus Google Sign-In for user accounts. **Implemented in:** `lib/services/auth_service.dart` (class `AuthService`). **Usage:** sign up / sign in via the app UI (login/signup screens). **Env:** none required for basic auth; see Configuration for optional OAuth keys.
+  - Evidence: `lib/services/auth_service.dart` lines ~1-20 (GoogleSignIn instance) and lines ~228-238 (Google Sign-In flow).
+- **Centralized Firebase Initialization & AppCheck:** Initializes Firebase and activates App Check (ReCAPTCHA V3 on web / Play Integrity on Android). **Implemented in:** `lib/services/firebase_service.dart` (static `initialize()` method). **Usage:** called from `lib/main.dart` before `runApp()`. **Env:** `RECAPTCHA_V3_SITE_KEY` for web App Check.
+  - Evidence: `lib/main.dart` (calls `await FirebaseService.initialize();`) and `lib/services/firebase_service.dart` lines ~31-36 (initialize + AppCheck activation).
+- **Upload & Submit Question Papers:** Upload images (camera/gallery), compress, OCR text (ML Kit), upload to Cloudinary, save metadata to Firestore, and update topic frequency. **Implemented in:** `lib/screens/ui/question_paper_submission_page.dart`, `lib/services/cloudinary_service.dart`, `lib/services/firestore_service.dart`, `lib/services/firebase_storage_service.dart`.
+  - Usage example (in-app flow): select image → submit → app runs OCR, uploads image, extracts topics, saves to `submitted_papers` and `question_papers`.
+  - Env: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET` (Cloudinary upload); see Configuration.
+  - Evidence: `lib/screens/ui/question_paper_submission_page.dart` (image pick / `_submitPaper()` flow, calls Cloudinary + Firestore + Groq), `lib/services/cloudinary_service.dart` lines ~1-20.
+
+### Search & Discovery
+
+- **Firestore-backed search & filters:** Stream-based queries for submitted papers with filters (college, branch, semester, subject, exam type), pagination, popular/recent lists. **Implemented in:** `lib/repositories/search_repository.dart`, `lib/services/firebase_search_service.dart`, `lib/riverpod/question_paper_provider.dart`.
+  - Usage examples (client API): call `SearchRepository.searchExamPapers(...)` or use providers like `recentPapersProvider` and `textSearchProvider` in UI.
+  - Evidence: `lib/services/firebase_search_service.dart` (methods `searchQuestionPapers`, `getColleges`, etc.) and `lib/repositories/search_repository.dart` (searchExamPapers implementation).
+
+### AI / LLM Integration
+
+- **Topic extraction (Groq API wrapper):** Sends extracted text to an LLM (Groq API) to extract Part B topics (returns JSON array). **Implemented in:** `lib/services/groq_service.dart` (method `extractPartBTopics`). **Env:** `GROQ_API_KEY` (in `.env`).
+  - Evidence: `lib/services/groq_service.dart` lines ~1-30 (apiKey loading and `extractPartBTopics` signature) and usage in `question_paper_submission_page.dart` where `extractPartBTopics` is called.
+
+### UI / Frontend
+
+- **Modern multi-screen UI:** Entry screen, Dashboard, Search pages, Profile, Paper detail, Topic search, submission flow. **Implemented in:** `lib/screens/*` (e.g., `lib/screens/ui/entry_screen.dart`, `lib/screens/ui/home.dart`, `lib/screens/ui/search.dart`, `lib/screens/ui/question_paper_submission_page.dart`).
+  - Evidence: `lib/screens/ui/entry_screen.dart` (Entry UI and navigation buttons) and `lib/screens/ui/home.dart` (Dashboard with stats and navigation to search/submission pages).
+
+### Integrations
+
+- **Cloudinary**: image hosting used during submission. **Implemented in:** `lib/services/cloudinary_service.dart`. **Env:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`.
+- **Firebase (Auth, Firestore, Storage, App Check)**: used across app for auth, persistent storage, and security. **Implemented in:** `lib/services/firebase_service.dart`, `lib/services/firestore_service.dart`, `lib/services/firebase_storage_service.dart`.
+- **ML Kit (Text Recognition)**: OCR for extracting text from uploaded images. **Implemented in:** `lib/screens/ui/question_paper_submission_page.dart` (uses `google_mlkit_text_recognition`).
+
+## Quick Start
+
+- **Prerequisites:** `flutter` SDK (>= 3.9.2), a Firebase project (for Auth/Firestore/Storage), optional Cloudinary account and Groq API key for topic extraction.
+- **Install dependencies:**
+
+```bash
+flutter pub get
+```
+
+- **Run (debug):**
+
+```bash
+flutter run
+```
+
+- **Codegen (Riverpod):**
+
+```bash
+flutter pub run build_runner watch --delete-conflicting-outputs
+```
+
+## Usage
+
+- App entrypoint: `lib/main.dart` — loads `.env`, initializes Firebase via `FirebaseService.initialize()`, and runs `MyApp()`.
+- Main flows (in-app):
+  - Login / Sign up: use the UI in `lib/screens/auth/login_screen.dart` and `lib/screens/auth/signup_screen.dart`.
+  - Submit Paper: `QuestionPaperSubmissionPage` (select image → OCR → Cloudinary upload → Firestore writes → Groq topic extraction).
+  - Search Papers: `SearchQuestionPaperPage` and repository/provider APIs under `lib/repositories` and `lib/riverpod`.
+
+### Example (what happens when you submit a paper)
+
+1. User selects image (camera/gallery) in the app UI (`QuestionPaperSubmissionPage`).
+2. App compresses image, runs OCR (`google_mlkit_text_recognition`), uploads image to Cloudinary (`CloudinaryService.uploadImage`).
+3. The app saves a document in the `submitted_papers` collection via `FirestoreService.submitToSubmittedPapers` and saves extracted topics in `question_papers`.
+4. Topic counts are updated in `questions` collection via `FirestoreService.updateQuestionsCollection`.
+
+## Configuration
+
+- Environment file: the app expects a `.env` file at project root (the file is included in `pubspec.yaml` assets). Key variables used in code:
+
+```text
+GROQ_API_KEY                 # used by lib/services/groq_service.dart
+CLOUDINARY_CLOUD_NAME        # used by lib/services/cloudinary_service.dart
+CLOUDINARY_UPLOAD_PRESET     # used by lib/services/cloudinary_service.dart
+RECAPTCHA_V3_SITE_KEY        # used by Firebase App Check in lib/services/firebase_service.dart
+```
+
+- Firebase configuration: `lib/firebase_options.dart` and `lib/config/firebase_config.dart` contain generated FirebaseOptions (projectId `exam-ready-13`) for supported platforms. Replace or configure via the FlutterFire CLI or `google-services.json` / `GoogleService-Info.plist` for platform-specific setups.
+
+## Development & Tests
+
+- Run tests with:
+
+```bash
+flutter test
+```
+
+- Integration tests: there are firebase-related integration tests under `test/` (e.g. `firebase_integration_test.dart`) which call `FirebaseTestHelper.initializeFirebase()`.
+
+## Detected Files (scanned evidence)
+
+Below are the main files scanned and the evidence snippets used to build the Features/Usage sections. For inferred items the note `Inferred — check` appears.
+
+- `lib/main.dart` (entrypoint)
+
+  - snippet: `await FirebaseService.initialize();` (initialization call)
+
+- `lib/services/firebase_service.dart`
+  - snippet (initialize + App Check):
+
+```dart
+await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
+await FirebaseAppCheck.instance.activate(
+  webProvider: ReCaptchaV3Provider(dotenv.env['RECAPTCHA_V3_SITE_KEY']!),
+  androidProvider: AndroidProvider.playIntegrity,
+);
+```
+
+- `lib/services/auth_service.dart`
+  - snippet (Google Sign-In & auth flows):
+
+```dart
+final GoogleSignIn _googleSignIn = GoogleSignIn();
+final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+```
+
+- `lib/screens/ui/question_paper_submission_page.dart`
+  - snippets (OCR, Cloudinary upload, Firestore writes, Groq usage):
+
+```dart
+final TextRecognizer _textRecognizer = TextRecognizer();
+final List<String> topics = await _chatGPTService.extractPartBTopics(extractedText);
+String? imageUrl = await _cloudinaryService.uploadImage(selectedImage!);
+final String docId = await _firestore_service.submitToSubmittedPapers(...);
+```
+
+- `lib/services/cloudinary_service.dart`
+
+  - snippet (env usage): `final cloudinary = CloudinaryPublic(dotenv.env['CLOUDINARY_CLOUD_NAME']!, dotenv.env['CLOUDINARY_UPLOAD_PRESET']!, cache: false);`
+
+- `lib/services/groq_service.dart`
+
+  - snippet (env & function): `static final String apiKey = dotenv.env['GROQ_API_KEY'] ?? '';` and `Future<List<String>> extractPartBTopics(String extractedText)`
+
+- `lib/repositories/search_repository.dart` and `lib/services/firebase_search_service.dart`
+
+  - snippet: search and pagination functions (`searchExamPapers`, `searchQuestionPapers`, `getColleges`, etc.)
+
+- `pubspec.yaml`
+  - dependency list (Firebase packages, Cloudinary, Google ML Kit, Riverpod, flutter_bloc, etc.)
+
+---
+
+## TODO / Notes
+
+- Inferred — check: Some project-level CI badges in the README are placeholders and should be replaced with real URLs if CI is configured (existing badges in the top of the file use `{your-github-username}` placeholders).
+- TODO: If you want, I can also generate a `.env.example` listing the variables above.
 
 ### Tech Stack
 
@@ -55,11 +203,11 @@ A modern, feature-rich Flutter application designed to help users prepare for ex
 
 ## 📸 Screenshots
 
-Here are some previews of the *Exam Ready* app:
+Here are some previews of the _Exam Ready_ app:
 
-| Login Screen                                    | Home Screen                                      |
-| ----------------------------------------------- | ------------------------------------------------ |
-| ![Login Screen](assets/Login_page.jpg)          | ![Home Screen](assets/dashbord_page.jpg)         |
+| Login Screen                           | Home Screen                              |
+| -------------------------------------- | ---------------------------------------- |
+| ![Login Screen](assets/Login_page.jpg) | ![Home Screen](assets/dashbord_page.jpg) |
 
 ---
 
