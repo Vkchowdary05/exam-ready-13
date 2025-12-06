@@ -1,182 +1,316 @@
-<p align="center"> <img src="assets/images/logo.png" height="140" alt="Exam Ready Logo"/> </p> <p align="center"> <strong>A modern, AI-powered Flutter application to help students find, upload, and analyze past exam papers.</strong> </p> <p align="center"> <img src="https://img.shields.io/github/actions/workflow/status/{your-github-username}/{your-repo-name}/main.yml?branch=main"/> <img src="https://img.shields.io/github/license/{your-github-username}/{your-repo-name}"/> <img src="https://img.shields.io/github/v/release/{your-github-username}/{your-repo-name}"/> <img src="https://img.shields.io/codecov/c/github/{your-github-username}/{your-repo-name}"/> </p>
-✨ About the Project
+# 🎓 Exam Ready — AI-Powered Exam Preparation Platform
 
-Exam Ready is a multi-platform Flutter application designed to simplify exam preparation.
-With powerful AI topic extraction, Firebase services, intuitive UI, and seamless uploads, this app helps students gain insights from past question papers faster than ever.
+**Exam Ready** is a modern, multi-platform Flutter application designed to help students **upload, search, discover, and analyze past exam papers**, powered by:
 
-🚀 Core Features
-🔐 Authentication (Firebase Auth + Google Sign-In)
+- **Google ML Kit (OCR)**
+- **Groq LLM (Topic Extraction)**
+- **Firebase (Auth, Firestore, Storage)**
+- **Cloudinary (Image Hosting)**
+- **Riverpod (State Management)**
 
-Secure login & signup via email/password or Google.
+The app aims to centralize exam preparation by allowing students to upload question papers, automatically extract topics, and search through a rich database of structured exam content.
 
-Implemented in lib/services/auth_service.dart
+---
 
-Automatically initializes with Firebase on app launch.
+## 🏗️ Project Overview
 
-☁️ Cloud-Powered Document Management
+Exam Ready automates the full workflow of:
 
-Upload question paper images (camera/gallery)
+1. **Uploading question paper images**
+2. **Extracting text using OCR**
+3. **Uploading images to Cloudinary**
+4. **Extracting topics using AI**
+5. **Saving structured content to Firestore**
+6. **Enabling fast, real-time search & filtering**
 
-Automatic image compression
+The app works across **Android, iOS, Web, Windows, macOS, and Linux** using Flutter’s multi-platform capabilities.
 
-OCR text extraction using ML Kit
+---
 
-Cloudinary image hosting
+# 🚀 Core Features
 
-Firestore storage of metadata & extracted topics
+## 🔐 1. Authentication System
+- Firebase Email/Password authentication  
+- Google Sign-In integration  
+- Auth state persistence  
+- Error-handled login/signup flows  
 
-🔍 Smart Search & Filtering
+**Key Files**
+- `lib/services/auth_service.dart`
+- `lib/screens/auth/login_screen.dart`
+- `lib/screens/auth/signup_screen.dart`
 
-Filter papers by college, branch, semester, subject, and exam type.
+---
 
-Real-time queries powered by Firestore streams.
+## 📤 2. Automated Question Paper Submission Pipeline
 
-Popular and recently uploaded papers surfaced automatically.
+### ✨ End-to-End Flow
 
-🤖 AI Topic Extraction (Groq API + LLM)
+User Image → Compress → OCR → Cloudinary Upload → Groq Topic Extraction → Firestore Storage
 
-Extracts Part-B High-Weightage Topics from uploaded papers.
+### 🔍 Steps in Detail
 
-Converts OCR text → JSON topic list
+#### 2.1 Image Selection
+- From camera or gallery  
+- Uses `image_picker` package  
 
-Implemented in lib/services/groq_service.dart
+#### 2.2 Image Compression
+- Ensures fast upload  
+- Reduces bandwidth usage  
 
-💫 Modern UI & Screens
+#### 2.3 OCR Extraction (Google ML Kit)
+- Detects text in uploaded images  
+- Structured extraction using ML Kit recognizers  
+- Runs fully on-device → fast & private  
 
-Clean entry screen & dashboard
+#### 2.4 Upload to Cloudinary
+- Returns a hosted secure URL  
+- Uses `CLOUDINARY_CLOUD_NAME` & `UPLOAD_PRESET`  
 
-Search page, paper detail page, submission flow
+#### 2.5 Groq API Topic Extraction (AI-Powered)
+- Sends OCR text to an LLM  
+- Returns structured JSON list of Part-B topics  
+- Used to classify and organize content  
 
-Reactive UI using Riverpod state management
+#### 2.6 Firestore Storage
+- Stores:
+  - image URL  
+  - extracted text  
+  - extracted topics  
+  - metadata (branch, subject, semester, exam type)  
 
-Smooth animations (Lottie + Flutter Animate)
+**Key Files**
+- `lib/screens/ui/question_paper_submission_page.dart`
+- `lib/services/cloudinary_service.dart`
+- `lib/services/groq_service.dart`
+- `lib/services/firestore_service.dart`
 
-🔗 Third-Party Integrations
+---
 
-Cloudinary for media hosting
+## 🔎 3. Powerful Search & Filtering
 
-Firebase (Auth, Firestore, Storage, App Check)
+### Supported Filters:
+- **College**
+- **Branch**
+- **Semester**
+- **Subject**
+- **Exam Type**
+- **Keyword full-text search**
 
-Google ML Kit for OCR
+### Real-time Data
+- All search results update instantly using Firestore streams  
+- Pagination supported  
 
-Riverpod + Bloc for state management
+**Key Files**
+- `lib/services/firebase_search_service.dart`
+- `lib/repositories/search_repository.dart`
+- `lib/riverpod/question_paper_provider.dart`
+- `lib/screens/ui/search.dart`
 
-🧠 Tech Stack
-Category	Technologies
-Frontend	Flutter
-Backend Services	Firebase Auth, Firestore, Storage
-AI Integration	Groq LLM API
-OCR	Google ML Kit
-State Management	Riverpod, Bloc
-Media Storage	Cloudinary
-Animations	Lottie, Flutter Animate
-📸 Screenshots
-Login Screen	Dashboard
+---
 
-	
-⚡ Getting Started
-✔️ Prerequisites
+## 🤖 4. AI-Driven Topic Extraction (Groq LLM)
 
-Flutter SDK (>= 3.9.2)
+The app integrates the Groq API to:
+- Extract exact Part-B questions  
+- Classify and normalize topic titles  
+- Return a structured list  
 
-Firebase CLI
+**Key File**
+- `lib/services/groq_service.dart`
 
-Code editor (VS Code, Android Studio)
+---
 
-📥 Installation
-git clone https://github.com/{your-github-username}/{your-repo-name}.git
-cd {your-repo-name}
-flutter pub get
+## 🎨 5. Clean, Modern UI
 
-🔧 Firebase Setup
+### Screens Included:
+- Entry screen  
+- Login screen  
+- Signup screen  
+- Dashboard  
+- Submission form  
+- Search page  
+- Paper detail page  
+- Topic explorer  
 
-Place:
+### UI Enhancements:
+- Lottie animations  
+- Smooth gradients  
+- Responsive for all screen sizes  
 
-google-services.json → android/app/
+**Key Files**
+- `lib/screens/ui/entry_screen.dart`
+- `lib/screens/ui/home.dart`
+- `lib/screens/ui/search.dart`
+- `lib/screens/ui/question_paper_submission_page.dart`
 
-GoogleService-Info.plist → ios/Runner/
+---
 
-🗝️ Environment Variables (.env)
+# 🏛️ Architecture
+
+## App Architecture (High-Level)
++-------------------------+
+| Presentation |
+| Flutter UI Screens |
++-----------+-------------+
+|
+v
++-------------------------+
+| State Management |
+| Riverpod Providers |
++-----------+-------------+
+|
+v
++-------------------------+
+| Domain & Repos |
+| SearchRepository, etc |
++-----------+-------------+
+|
+v
++-------------------------+
+| Services Layer |
+| Firebase, Cloudinary, |
+| Groq API, OCR, Storage |
++-----------+-------------+
+|
+v
++-------------------------+
+| Firebase Backend |
+| Auth, Firestore, |
+| Storage, AppCheck |
++-------------------------+
+
+
+---
+
+# 📁 Directory Breakdown
+
+
+
+lib/
+├── config/ # Firebase configuration
+├── data/ # Static lists (colleges, branches)
+├── models/ # Data models (QuestionPaper, etc.)
+├── providers/ # Riverpod provider definitions
+├── repositories/ # Data-access layer
+├── riverpod/ # Generated provider files
+├── screens/ # All UI screens
+│ ├── auth/
+│ ├── ui/
+│ └── widgets/
+├── services/ # Firebase, Cloudinary, ML, Groq API
+├── theme/ # AppTheme colors, fonts
+├── utils/ # Helpers, validators
+└── main.dart # App entry point
+
+
+---
+
+# 🔧 Configuration
+
+Create a `.env` file at project root:
+
+
+
 GROQ_API_KEY=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_UPLOAD_PRESET=
 RECAPTCHA_V3_SITE_KEY=
 
-📱 Usage
 
-Run the project:
+Firebase setup uses:
+- `lib/firebase_options.dart`
+- `lib/config/firebase_config.dart`
 
+Platform-specific files required:
+
+
+
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+
+---
+
+# 🚀 Setup Instructions
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/{your-username}/{your-repo}.git
+cd {your-repo}
+
+2. Install Packages
+flutter pub get
+
+3. Run the App
 flutter run
 
-🌟 Main User Flows
+4. Riverpod Codegen
+flutter pub run build_runner build --delete-conflicting-outputs
 
-Login/Signup
+📸 Screenshots
+Login	Dashboard
 
-Submit Paper
-→ OCR → Cloudinary → Firestore → AI Topic Extraction
+	
+🧪 Testing
 
-Search Papers via filters or keywords
+Run all tests:
 
-🏗️ Project Structure
-lib/
-├── config/
-├── data/
-├── models/
-├── providers/
-├── repositories/
-├── riverpod/
-├── screens/
-├── services/
-├── theme/
-├── utils/
-├── widgets/
-└── main.dart
-
-🧑‍💻 Development
-Generate Riverpod Files
-flutter pub run build_runner watch --delete-conflicting-outputs
-
-Run Tests
 flutter test
 
 📦 Deployment
+Android Deployment
+flutter build apk --release
 
-📱 Android → Build & upload to Google Play
-
-🍎 iOS → Archive & publish through Xcode
-
-Official Flutter deployment docs recommended.
+iOS Deployment
+flutter build ios --release
 
 🛣️ Roadmap
 
- User analytics
+ Offline mode & caching
 
- Offline exam paper caching
+ Multi-language OCR
 
- Improved AI topic clustering
+ Full-paper topic clustering
 
- Multi-language question classification
+ Predictive topic analysis
+
+ Educator dashboard
 
 🤝 Contributing
 
-Fork repo
+Pull requests are welcome.
+Please follow standard GitHub flow:
 
-Create feature branch
+Fork the repository
 
-Submit PR with clear description
+Create a feature branch
 
-See CONTRIBUTING.md.
+Commit changes
+
+Submit a pull request
 
 📄 License
 
-Licensed under MIT — see the LICENSE file.
+This project is licensed under MIT License.
+See LICENSE for details.
 
 📞 Contact
 
-Add your contact info here.
-Project Link:
-https://github.com/{your-github-username}/{your-repo-name}
+Add your personal contact info or portfolio link here.
 
 📝 Changelog
 
-See CHANGELOG.md for version history.
+See CHANGELOG.md for version history and patch notes.
+
+
+---
+
+If you'd like, I can generate:
+
+✅ A **banner image** for the README  
+✅ A **full docs/ folder** with architecture diagrams  
+✅ A **GitHub Copilot JSON prompt** to regenerate README automatically  
+✅ A **badges section with real-time stats**  
+
+Want me to include those?
