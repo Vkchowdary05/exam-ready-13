@@ -18,7 +18,11 @@ class _EntryScreenState extends State<EntryScreen> {
   final List<Map<String, dynamic>> stats = [
     {'icon': Icons.school_outlined, 'number': '250+', 'label': 'Colleges'},
     {'icon': Icons.people_outline, 'number': '50K+', 'label': 'Active Users'},
-    {'icon': Icons.description_outlined, 'number': '10K+', 'label': 'Exam Papers'},
+    {
+      'icon': Icons.description_outlined,
+      'number': '10K+',
+      'label': 'Exam Papers',
+    },
     {'icon': Icons.category_outlined, 'number': '85+', 'label': 'Departments'},
   ];
 
@@ -108,15 +112,9 @@ class _EntryScreenState extends State<EntryScreen> {
                 const SizedBox(height: 16),
                 _buildStatsSection(),
                 const SizedBox(height: 32),
-                _buildPopularSection(
-                  'Popular Colleges',
-                  popularColleges,
-                ),
+                _buildPopularSection('Popular Colleges', popularColleges),
                 const SizedBox(height: 32),
-                _buildPopularSection(
-                  'Popular Departments',
-                  popularDepartments,
-                ),
+                _buildPopularSection('Popular Departments', popularDepartments),
                 const SizedBox(height: 24),
               ],
             ),
@@ -128,58 +126,58 @@ class _EntryScreenState extends State<EntryScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentColor.withOpacity(0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentColor.withOpacity(0.15),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.school_outlined,
-              size: 28,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Exam Ready',
-                  style: AppTheme.headingStyle.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your Ultimate Exam Companion',
-                  style: AppTheme.subheadingStyle.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
+                child: const Icon(
+                  Icons.school_outlined,
+                  size: 28,
+                  color: Colors.white,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exam Ready',
+                      style: AppTheme.headingStyle.copyWith(
+                        color: Colors.white,
+                        fontSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Your Ultimate Exam Companion',
+                      style: AppTheme.subheadingStyle.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    )
+        )
         .animate()
         .fadeIn(duration: 500.ms)
         .slideY(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOut);
@@ -187,16 +185,12 @@ class _EntryScreenState extends State<EntryScreen> {
 
   Widget _buildAuthButtons() {
     return Row(
-      children: [
-        Expanded(
-          child: _buildLoginButton(),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSignUpButton(),
-        ),
-      ],
-    )
+          children: [
+            Expanded(child: _buildLoginButton()),
+            const SizedBox(width: 12),
+            Expanded(child: _buildSignUpButton()),
+          ],
+        )
         .animate()
         .fadeIn(duration: 500.ms, delay: 150.ms)
         .slideY(begin: 0.15, end: 0, duration: 500.ms, delay: 150.ms);
@@ -207,9 +201,9 @@ class _EntryScreenState extends State<EntryScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const LoginScreen()));
         },
         borderRadius: BorderRadius.circular(12),
         child: Ink(
@@ -229,16 +223,9 @@ class _EntryScreenState extends State<EntryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.login_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                const Icon(Icons.login_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Text(
-                  'Login',
-                  style: AppTheme.buttonTextStyle,
-                ),
+                Text('Login', style: AppTheme.buttonTextStyle),
               ],
             ),
           ),
@@ -252,9 +239,9 @@ class _EntryScreenState extends State<EntryScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const SignupScreen()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const SignupScreen()));
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -262,10 +249,7 @@ class _EntryScreenState extends State<EntryScreen> {
           decoration: BoxDecoration(
             color: AppTheme.cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.borderColor,
-              width: 1,
-            ),
+            border: Border.all(color: AppTheme.borderColor, width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -297,10 +281,7 @@ class _EntryScreenState extends State<EntryScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTheme.headingStyle.copyWith(fontSize: 20),
-    )
+    return Text(title, style: AppTheme.headingStyle.copyWith(fontSize: 20))
         .animate()
         .fadeIn(duration: 400.ms)
         .slideX(begin: -0.1, end: 0, duration: 400.ms);
@@ -332,10 +313,7 @@ class _EntryScreenState extends State<EntryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTheme.headingStyle.copyWith(fontSize: 20),
-        )
+        Text(title, style: AppTheme.headingStyle.copyWith(fontSize: 20))
             .animate()
             .fadeIn(duration: 400.ms)
             .slideX(begin: -0.1, end: 0, duration: 400.ms),

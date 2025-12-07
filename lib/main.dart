@@ -14,13 +14,28 @@ void main() async {
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
-  // Initialize Firebase using centralized service
-  await FirebaseService.initialize();
+  try {
+    // Initialize Firebase using centralized service
+    await FirebaseService.initialize();
 
-  developer.log(
-    'Firebase App Initialized. Project ID: ${Firebase.app().options.projectId}',
-    name: 'FirebaseInit',
-  );
+    developer.log(
+      'Firebase App Initialized. Project ID: ${Firebase.app().options.projectId}',
+      name: 'FirebaseInit',
+    );
+  } on UnsupportedError catch (e) {
+    developer.log(
+      'Firebase initialization failed: ${e.message}',
+      name: 'FirebaseInitError',
+      error: e,
+    );
+    // Optionally, show a friendly error screen to the user
+  } catch (e) {
+    developer.log(
+      'An unexpected error occurred during Firebase initialization.',
+      name: 'FirebaseInitError',
+      error: e,
+    );
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }

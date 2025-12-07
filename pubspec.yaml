@@ -86,11 +86,11 @@ flutter:
     - assets/lottie/
     - assets/dashbord_page.jpg
     - assets/Login_page.jpg
-    - assets/Logo.jpg
+    - assets/Logo.png
     - .env
 
 # Launcher icon configuration (generate app icons from a single image)
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/Logo.jpg"
+  image_path: "assets/Logo.png"
