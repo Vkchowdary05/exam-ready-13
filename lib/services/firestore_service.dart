@@ -1,10 +1,16 @@
+// lib/services/firestore_service.dart
+
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// Preferred submit method — returns the created document ID.
+  /// - Stores userId + userName in submitted_papers
+  /// - Creates a reference under users/{uid}/submitted_papers/{paperId}
   Future<String> submitQuestionPaper({
     required String college,
     required String branch,
@@ -15,9 +21,37 @@ class FirestoreService {
     String? userId,
   }) async {
     try {
-      developer.log('Attempting to create document in submitted_papers...', name: 'FirestoreService');
-      final serverTs = FieldValue.serverTimestamp();
+      // resolve userId (from param or FirebaseAuth)
+      userId ??= _auth.currentUser?.uid;
+      if (userId == null) {
+        throw Exception('User not logged in. Cannot submit paper.');
+      }
 
+      developer.log(
+        'Attempting to create document in submitted_papers...',
+        name: 'FirestoreService',
+      );
+
+      // 1) Get user name from users/{uid} (fallback to auth email)
+      String? userName;
+      try {
+        final userDoc =
+            await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          final data = userDoc.data() as Map<String, dynamic>?;
+          userName = data?['name'] as String?;
+          userName ??= data?['userName'] as String?;
+          userName ??= data?['email'] as String?;
+        }
+      } catch (_) {
+        // ignore, we'll fallback
+      }
+      userName ??= _auth.currentUser?.email ?? 'Unknown';
+
+      final serverTs = FieldValue.serverTimestamp();
+      final nowIso = DateTime.now().toIso8601String();
+
+      // 2) Create main document in submitted_papers
       final docRef = await _firestore.collection('submitted_papers').add({
         // canonical
         'college': college,
@@ -29,23 +63,33 @@ class FirestoreService {
         'uploadedAt': serverTs,
         'timestamp': serverTs,
         'status': 'pending',
-        // compatibility
-        'exam_type': examType,
-        'image_url': imageUrl,
-        'uploaded_at': serverTs,
-        if (userId != null) 'userId': userId,
-        'createdAt': DateTime.now().toIso8601String(),
+        'userId': userId,
+        'userName': userName,
+
+        
       });
 
-      developer.log('Firestore: Document created with ID: ${docRef.id}', name: 'FirestoreService');
+      developer.log(
+        'Firestore: Document created with ID: ${docRef.id}',
+        name: 'FirestoreService',
+      );
+
+      // 3) Link this paper under user doc (subcollection with only ID)
+      await _linkPaperToUser(userId: userId, paperId: docRef.id);
+
       return docRef.id;
     } catch (e, s) {
-      developer.log('Error submitting question paper to Firestore', name: 'FirestoreService', error: e, stackTrace: s);
+      developer.log(
+        'Error submitting question paper to Firestore',
+        name: 'FirestoreService',
+        error: e,
+        stackTrace: s,
+      );
       rethrow;
     }
   }
 
-  // Compatibility wrappers used by UI code
+  /// Backward-compatible wrapper used by old UI code.
   Future<String> submitToSubmittedPapers({
     required String college,
     required String branch,
@@ -53,7 +97,8 @@ class FirestoreService {
     required String subject,
     required String examType,
     required String imageUrl,
-  }) async {
+    String? userId,
+  }) {
     return submitQuestionPaper(
       college: college,
       branch: branch,
@@ -61,9 +106,55 @@ class FirestoreService {
       subject: subject,
       examType: examType,
       imageUrl: imageUrl,
+      userId: userId,
     );
   }
 
+  /// Only creates a reference document under:
+  /// users/{userId}/submitted_papers/{paperId}
+  /// with a single field: paperId
+  Future<void> _linkPaperToUser({
+    required String userId,
+    required String paperId,
+  }) async {
+    try {
+      final userDocRef = _firestore.collection('users').doc(userId);
+
+      // Ensure user doc exists (but don't overwrite details)
+      await userDocRef.set(
+        {
+          'uid': userId,
+          'lastPaperLinkedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      final userPaperRef =
+          userDocRef.collection('submitted_papers').doc(paperId);
+
+      await userPaperRef.set(
+        {
+          'paperId': paperId,
+        },
+        SetOptions(merge: true),
+      );
+
+      developer.log(
+        'Linked paper $paperId to user $userId (ID only)',
+        name: 'FirestoreService',
+      );
+    } catch (e, s) {
+      developer.log(
+        'Error linking paper $paperId to user $userId',
+        name: 'FirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      // don't rethrow; main submit already succeeded
+    }
+  }
+
+  /// Legacy "question_papers" collection for topic metadata (if you still use it)
   Future<void> submitToQuestionPapers({
     required String college,
     required String branch,
@@ -77,31 +168,24 @@ class FirestoreService {
       'branch': branch,
       'semester': semester,
       'subject': subject,
-      'exam_type': examType,
+      'examType': examType,
       'topics': topics,
-      'created_at': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
     };
 
     await _firestore.collection('question_papers').add(doc);
   }
 
   /// Update topic frequency counts in `questions` collection.
-  /// The `documentName` parameter is used as the document id under `questions`.
-  /// This method writes topic entries in the form:
-  ///   "TOPIC NAME": { "display": "TOPIC NAME\n<count>\n(number)", "count": <count> }
-  /// and timestamps:
-  ///   createdAt  -> human-readable IST (preserved if already present)
-  ///   lastModified -> ISO 8601 UTC string
-  ///   updatedAt -> human-readable IST
+  /// This is what you call after Groq topic extraction.
   Future<void> updateQuestionsCollection({
     required String documentName,
     required List<String> topics,
   }) async {
-    final DocumentReference docRef = _firestore
-        .collection('questions')
-        .doc(documentName);
+    final DocumentReference docRef =
+        _firestore.collection('questions').doc(documentName);
 
-    // 1) Compute frequencies from the topics list (preserve original casing)
+    // Compute frequencies
     final Map<String, int> freq = {};
     for (final t in topics) {
       final key = t.trim();
@@ -109,38 +193,29 @@ class FirestoreService {
       freq[key] = (freq[key] ?? 0) + 1;
     }
 
-    // 2) Prepare timestamps
     final DateTime nowUtc = DateTime.now().toUtc();
     final DateTime nowIst = nowUtc.add(const Duration(hours: 5, minutes: 30));
     final String lastModifiedIso = nowUtc.toIso8601String();
     final String humanIst = _formatHumanReadableIST(nowIst);
 
-    // 3) Run transaction: if doc exists -> increment each topic field by freq
-    //    if doc doesn't exist -> create with counts and createdAt/updatedAt/lastModified
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
 
       if (snapshot.exists) {
-        // Build increment map
         final Map<String, dynamic> increments = {};
-        for (final entry in freq.entries) {
-          // Use the topic string as a top-level field name
-          increments[entry.key] = FieldValue.increment(entry.value);
-        }
-
-        // Ensure we also update lastModified and updatedAt (human-readable)
+        freq.forEach((topic, count) {
+          increments[topic] = FieldValue.increment(count);
+        });
         increments['lastModified'] = lastModifiedIso;
         increments['updatedAt'] = humanIst;
 
         transaction.update(docRef, increments);
       } else {
-        // Document doesn't exist: build initial map with counts
         final Map<String, dynamic> initial = {};
-        for (final entry in freq.entries) {
-          initial[entry.key] = entry.value;
-        }
+        freq.forEach((topic, count) {
+          initial[topic] = count;
+        });
 
-        // set createdAt (human-readable IST), lastModified (iso UTC), updatedAt (human-readable)
         initial['createdAt'] = humanIst;
         initial['lastModified'] = lastModifiedIso;
         initial['updatedAt'] = humanIst;
@@ -150,10 +225,9 @@ class FirestoreService {
     });
   }
 
-  /// Helper to format IST human-readable as in your screenshot:
   /// "24 November 2025 at 23:24:59 UTC+5:30"
   String _formatHumanReadableIST(DateTime dt) {
-    final months = [
+    const months = [
       'January',
       'February',
       'March',

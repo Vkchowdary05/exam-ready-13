@@ -1,3 +1,5 @@
+// lib/services/firebase_service.dart
+
 import 'package:exam_ready/firebase_options.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,7 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Centralized Firebase service to prevent multiple instance creation
-/// and ensure proper resource management
+/// and ensure proper resource management.
 class FirebaseService {
   static FirebaseService? _instance;
   static FirebaseService get instance => _instance ??= FirebaseService._();
@@ -48,8 +50,6 @@ class FirebaseService {
 
   /// Dispose resources (call on app termination)
   static Future<void> dispose() async {
-    // Firebase services don't need explicit disposal
-    // but we can clear our singleton
     _instance = null;
   }
 }

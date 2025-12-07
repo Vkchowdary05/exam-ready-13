@@ -55,14 +55,31 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (result['success']) {
-      // ✅ Success animation
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => Center(
-          child: Icon(Icons.check_circle, color: Colors.greenAccent, size: 100)
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.shade200,
+                  blurRadius: 30,
+                  spreadRadius: 10,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.check_circle,
+              color: Colors.green.shade600,
+              size: 80,
+            ),
+          )
               .animate()
-              .scale(duration: 800.ms, curve: Curves.elasticOut)
+              .scale(duration: 600.ms, curve: Curves.elasticOut)
               .then(delay: 400.ms)
               .fadeOut(duration: 300.ms),
         ),
@@ -85,12 +102,29 @@ class _SignupScreenState extends State<SignupScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message']),
-          backgroundColor: AppTheme.errorColor,
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  result['message'],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          margin: const EdgeInsets.all(16),
+          elevation: 0,
         ),
       );
     }
@@ -104,248 +138,407 @@ class _SignupScreenState extends State<SignupScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.blue.shade50.withOpacity(0.3),
+              Colors.purple.shade50.withOpacity(0.2),
+            ],
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.08,
-                vertical: screenHeight * 0.02,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: screenHeight * 0.04),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.08,
+                    vertical: screenHeight * 0.02,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: screenHeight * 0.02),
 
-                    // Back Button
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                      color: AppTheme.textPrimary,
-                    ).animate().fadeIn(delay: 100.ms),
-
-                    SizedBox(height: screenHeight * 0.02),
-
-                    // Logo Hero
-                    Center(
-                      child: Hero(
-                        tag: 'auth_logo',
-                        child: Container(
-                          width: 100,
-                          height: 100,
+                        // Back Button
+                        Container(
                           decoration: BoxDecoration(
-                            gradient: AppTheme.accentGradient,
-                            shape: BoxShape.circle,
-                            boxShadow: AppTheme.cardShadow,
-                          ),
-                          child: const Icon(
-                            Icons.person_add_outlined,
-                            size: 50,
                             color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ).animate().scale(
-                      duration: 600.ms,
-                      curve: Curves.elasticOut,
-                    ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  Icons.arrow_back_rounded,
+                                  color: Colors.grey.shade700,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 100.ms),
 
-                    SizedBox(height: screenHeight * 0.04),
+                        SizedBox(height: screenHeight * 0.04),
 
-                    // Title
-                    Text('Create Account', style: AppTheme.headingStyle)
-                        .animate()
-                        .fadeIn(delay: 200.ms)
-                        .slideX(begin: -0.2, end: 0),
+                        // Logo Hero
+                        Center(
+                          child: Hero(
+                            tag: 'auth_logo',
+                            child: Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.blue.shade600,
+                                    Colors.blue.shade700,
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blue.shade200.withOpacity(0.5),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.person_add_outlined,
+                                size: 40,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ).animate().scale(
+                              duration: 600.ms,
+                              curve: Curves.easeOut,
+                            ),
 
-                    const SizedBox(height: 8),
-                    Text(
+                        SizedBox(height: screenHeight * 0.04),
+
+                        // Title
+                        Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade800,
+                            letterSpacing: -0.5,
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+
+                        const SizedBox(height: 8),
+                        Text(
                           'Sign up to get started',
-                          style: AppTheme.subHeadingStyle,
-                        )
-                        .animate()
-                        .fadeIn(delay: 300.ms)
-                        .slideX(begin: -0.2, end: 0),
-
-                    SizedBox(height: screenHeight * 0.04),
-
-                    // Name Field
-                    TextFormField(
-                          controller: _nameController,
-                          keyboardType: TextInputType.name,
-                          style: AppTheme.inputTextStyle,
-                          decoration: AppTheme.inputDecoration(
-                            hint: 'Full Name',
-                            icon: Icons.person_outline,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey.shade600,
+                            letterSpacing: 0.2,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            if (value.length < 3) {
-                              return 'Name must be at least 3 characters';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 400.ms)
-                        .slideY(begin: 0.2, end: 0),
+                        ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
 
-                    const SizedBox(height: 20),
+                        SizedBox(height: screenHeight * 0.04),
 
-                    // Email Field ✅ Fixed Regex
-                    TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          style: AppTheme.inputTextStyle,
-                          decoration: AppTheme.inputDecoration(
-                            hint: 'Email Address',
-                            icon: Icons.email_outlined,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(
-                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                            ).hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 500.ms)
-                        .slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 20),
-
-                    // Password Field
-                    TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          style: AppTheme.inputTextStyle,
-                          decoration: AppTheme.inputDecoration(
-                            hint: 'Password',
-                            icon: Icons.lock_outline,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: AppTheme.textSecondary,
-                              ),
-                              onPressed: () {
-                                setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                );
-                              },
+                        // Name Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                              width: 1,
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 600.ms)
-                        .slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 20),
-
-                    // Confirm Password Field
-                    TextFormField(
-                          controller: _confirmPasswordController,
-                          obscureText: _obscureConfirmPassword,
-                          style: AppTheme.inputTextStyle,
-                          decoration: AppTheme.inputDecoration(
-                            hint: 'Confirm Password',
-                            icon: Icons.lock_outline,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: AppTheme.textSecondary,
+                          child: TextFormField(
+                            controller: _nameController,
+                            keyboardType: TextInputType.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade800,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.2,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Full Name',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
                               ),
-                              onPressed: () {
-                                setState(
-                                  () => _obscureConfirmPassword =
-                                      !_obscureConfirmPassword,
-                                );
-                              },
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: Colors.grey.shade600,
+                                size: 22,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              if (value.length < 3) {
+                                return 'Name must be at least 3 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                        ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
+
+                        const SizedBox(height: 16),
+
+                        // Email Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                              width: 1,
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please confirm your password';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 700.ms)
-                        .slideY(begin: 0.2, end: 0),
+                          child: TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade800,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.2,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Email Address',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: Colors.grey.shade600,
+                                size: 22,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              }
+                              if (!RegExp(
+                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                              ).hasMatch(value)) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
+                          ),
+                        ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1, end: 0),
 
-                    SizedBox(height: screenHeight * 0.04),
+                        const SizedBox(height: 16),
 
-                    // Sign Up Button
-                    GradientButton(
+                        // Password Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade800,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.2,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Password',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: Colors.grey.shade600,
+                                size: 22,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: Colors.grey.shade500,
+                                  size: 22,
+                                ),
+                                onPressed: () {
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1, end: 0),
+
+                        const SizedBox(height: 16),
+
+                        // Confirm Password Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade800,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.2,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Confirm Password',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: Colors.grey.shade600,
+                                size: 22,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: Colors.grey.shade500,
+                                  size: 22,
+                                ),
+                                onPressed: () {
+                                  setState(
+                                    () => _obscureConfirmPassword =
+                                        !_obscureConfirmPassword,
+                                  );
+                                },
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please confirm your password';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
+                        ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1, end: 0),
+
+                        SizedBox(height: screenHeight * 0.04),
+
+                        // Sign Up Button
+                        GradientButton(
                           text: 'Sign Up',
                           onPressed: _handleSignUp,
                           isLoading: _isLoading,
                           icon: Icons.arrow_forward,
-                          gradient: AppTheme.accentGradient,
-                        )
-                        .animate()
-                        .fadeIn(delay: 800.ms)
-                        .slideY(begin: 0.2, end: 0),
-
-                    SizedBox(height: screenHeight * 0.03),
-
-                    // Login Link
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Already have an account? ',
-                            style: AppTheme.subHeadingStyle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue.shade600,
+                              Colors.blue.shade700,
+                            ],
                           ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Text(
-                              'Login',
-                              style: AppTheme.labelTextStyle.copyWith(
-                                color: AppTheme.accentColor,
-                                fontWeight: FontWeight.bold,
+                        ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1, end: 0),
+
+                        SizedBox(height: screenHeight * 0.03),
+
+                        // Login Link
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Already have an account? ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                  letterSpacing: 0.2,
+                                ),
                               ),
-                            ),
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blue.shade600,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 900.ms),
+                        ).animate().fadeIn(delay: 900.ms),
 
-                    SizedBox(height: screenHeight * 0.02),
-                  ],
+                        SizedBox(height: screenHeight * 0.02),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

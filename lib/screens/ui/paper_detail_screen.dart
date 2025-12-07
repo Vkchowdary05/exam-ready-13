@@ -275,6 +275,13 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             value: DateFormat('MMM dd, yyyy').format(paper.uploadedAt),
             isLast: true,
           ),
+          _buildDetailRow(
+            icon: Icons.person_rounded,
+            label: 'Paper By',
+            value: (paper.userName != null && paper.userName!.trim().isNotEmpty)
+                ? paper.userName!
+                : '',
+          ),
         ],
       ),
     );
@@ -858,8 +865,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.info_outline_rounded,
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.info_outline_rounded,
               color: Colors.white,
               size: 22,
             ),
@@ -872,8 +879,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
         backgroundColor: isError
             ? const Color(0xFFE53935)
             : isSuccess
-                ? const Color(0xFF43A047)
-                : const Color(0xFF667EEA),
+            ? const Color(0xFF43A047)
+            : const Color(0xFF667EEA),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),

@@ -886,8 +886,16 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             icon: Icons.access_time_rounded,
             label: 'Upload Date',
             value: DateFormat('MMM dd, yyyy').format(paper.uploadedAt),
-            isLast: true,
+            
+          ),_buildDetailRow(
+            icon: Icons.person_rounded,
+            label: 'Paper By',
+            value: (paper.userName != null && paper.userName!.trim().isNotEmpty)
+                ? paper.userName!
+                : '',
+                isLast: true,
           ),
+          
         ],
       ),
     );

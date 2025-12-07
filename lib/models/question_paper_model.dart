@@ -1,12 +1,8 @@
-// lib/models/question_paper.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
 
-/// Unified QuestionPaper model combining fields and helpers from both
-/// previous implementations. Supports flexible Firestore field names
-/// (snake_case and camelCase) and multiple timestamp formats.
-class QuestionPaper extends Equatable {
+/// Model class representing a Question Paper document
+/// Compatible with the new submitted_papers schema.
+class QuestionPaper {
   final String id;
   final String college;
   final String branch;
@@ -14,16 +10,25 @@ class QuestionPaper extends Equatable {
   final String subject;
   final String examType;
   final String imageUrl;
-  final String pdfUrl;
-  final String year;
-  final DateTime uploadedAt; // canonical upload timestamp
-  final String status; // pending, approved, rejected
-  final int views;
-  final int downloads;
-  final int likes;
-  final String userId;
+  final String imagePublicId;
+  final String uploadedBy; // userId
+  String uploadedByName; // userName/email
+  final DateTime uploadedAt;
+  // Convenience getters for newer naming
+  // Returns uploader name if already stored in document.
+  // If missing, it will fetch from Firestore and cache it.
+  String get userName {
+    if (uploadedByName.isNotEmpty) return uploadedByName;
 
-  const QuestionPaper({
+    // Start async fetch — cannot await inside getter
+    _fetchAndCacheUserName();
+
+    return ''; // temporarily empty until async loads
+  }
+
+  String get userId => uploadedBy;
+
+  QuestionPaper({
     required this.id,
     required this.college,
     required this.branch,
@@ -31,89 +36,126 @@ class QuestionPaper extends Equatable {
     required this.subject,
     required this.examType,
     required this.imageUrl,
-    this.pdfUrl = '',
-    this.year = '',
+    required this.imagePublicId,
+    required this.uploadedBy,
+    required this.uploadedByName,
     required this.uploadedAt,
-    this.status = 'pending',
-    this.views = 0,
-    this.downloads = 0,
-    this.likes = 0,
-    this.userId = '',
   });
 
-  /// Flexible factory from Firestore DocumentSnapshot that handles both
-  /// snake_case and camelCase field names and multiple timestamp formats.
-  factory QuestionPaper.fromFirestore(DocumentSnapshot doc) {
-    final raw = doc.data();
-    final data = (raw is Map<String, dynamic>) ? raw : <String, dynamic>{};
+  // ---------------------------------------------------------------------------
+  //  READ HELPERS
+  // ---------------------------------------------------------------------------
 
-    // Helper to read with fallback keys
-    T? read<T>(List<String> keys, {T? defaultValue}) {
-      for (final k in keys) {
-        if (data.containsKey(k) && data[k] != null) {
-          return data[k] as T;
-        }
+  /// Flexible reader with multiple fallback key names
+  static T? _read<T>(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    T? defaultValue,
+  }) {
+    for (final k in keys) {
+      if (data.containsKey(k) && data[k] != null) {
+        return data[k] as T;
       }
-      return defaultValue;
+    }
+    return defaultValue;
+  }
+
+  /// Timestamp parser supporting multiple formats
+  static DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+
+    if (timestamp is Timestamp) return timestamp.toDate();
+    if (timestamp is DateTime) return timestamp;
+
+    if (timestamp is int) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
     }
 
-    // Determine timestamp: try multiple possible keys
-    final dynamic uploadedRaw = read<dynamic>(['uploaded_at', 'uploadedAt', 'timestamp', 'createdAt']);
-    final DateTime uploadedAt = _parseTimestamp(uploadedRaw);
+    if (timestamp is String) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (_) {
+        final ms = int.tryParse(timestamp);
+        if (ms != null) {
+          return DateTime.fromMillisecondsSinceEpoch(ms);
+        }
+      }
+    }
+
+    return DateTime.now();
+  }
+
+  // ---------------------------------------------------------------------------
+  //  FACTORY: From Firestore Document
+  // ---------------------------------------------------------------------------
+
+  factory QuestionPaper.fromFirestore(DocumentSnapshot doc) {
+    final raw = doc.data();
+    final Map<String, dynamic> data = raw is Map<String, dynamic>
+        ? raw
+        : <String, dynamic>{};
+
+    final uploadedAt = _parseTimestamp(
+      _read(data, ['uploadedAt', 'uploaded_at', 'timestamp', 'createdAt']),
+    );
 
     return QuestionPaper(
       id: doc.id,
-      college: (read<String>(['college']) ?? 'Unknown'),
-      branch: (read<String>(['branch']) ?? 'Unknown'),
-      semester: (read<String>(['semester']) ?? 'Unknown'),
-      subject: (read<String>(['subject']) ?? 'Unknown'),
-      examType: (read<String>(['exam_type', 'examType']) ?? 'Unknown'),
-      imageUrl: (read<String>(['image_url', 'imageUrl']) ?? ''),
-      pdfUrl: (read<String>(['pdf_url', 'pdfUrl']) ?? ''),
-      year: (read<String>(['year']) ?? ''),
+      college: _read(data, ['college']) ?? 'Unknown',
+      branch: _read(data, ['branch']) ?? 'Unknown',
+      semester: _read(data, ['semester']) ?? 'Unknown',
+      subject: _read(data, ['subject']) ?? 'Unknown',
+      examType: _read(data, ['examType', 'exam_type']) ?? 'Unknown',
+      imageUrl: _read(data, ['imageUrl', 'image_url']) ?? '',
+      imagePublicId: _read(data, ['imagePublicId', 'image_public_id']) ?? '',
+      uploadedBy: _read(data, ['uploadedBy', 'userId', 'user_id']) ?? '',
+      uploadedByName:
+          _read(data, [
+            'uploadedByName',
+            'userName',
+            'user_name',
+            'uploaderName',
+          ]) ??
+          '',
       uploadedAt: uploadedAt,
-      status: (read<String>(['status']) ?? 'pending'),
-      views: (read<int>(['views']) ?? 0),
-      downloads: (read<int>(['downloads']) ?? 0),
-      likes: (read<int>(['likes']) ?? 0),
-      userId: (read<String>(['userId', 'user_id', 'uploadedBy']) ?? ''),
     );
   }
 
-  /// Factory from a plain Map (e.g., decoded JSON) with an explicit id
-  factory QuestionPaper.fromMap(Map<String, dynamic> map, String id) {
-    // Same flexible parsing as above
-    dynamic read(List<String> keys) {
-      for (final k in keys) {
-        if (map.containsKey(k) && map[k] != null) return map[k];
-      }
-      return null;
-    }
+  // ---------------------------------------------------------------------------
+  //  FACTORY: From Map (Dashboard summaries, custom aggregations, etc.)
+  // ---------------------------------------------------------------------------
 
-    final uploadedRaw = read(['uploaded_at', 'uploadedAt', 'timestamp', 'createdAt']);
-    final uploadedAt = _parseTimestamp(uploadedRaw);
+  factory QuestionPaper.fromMap(Map<String, dynamic> map, String id) {
+    final uploadedAt = _parseTimestamp(
+      _read(map, ['uploadedAt', 'uploaded_at', 'timestamp', 'createdAt']),
+    );
 
     return QuestionPaper(
       id: id,
-      college: (read(['college']) as String?) ?? 'Unknown',
-      branch: (read(['branch']) as String?) ?? 'Unknown',
-      semester: (read(['semester']) as String?) ?? 'Unknown',
-      subject: (read(['subject']) as String?) ?? 'Unknown',
-      examType: (read(['exam_type', 'examType']) as String?) ?? 'Unknown',
-      imageUrl: (read(['image_url', 'imageUrl']) as String?) ?? '',
-      pdfUrl: (read(['pdf_url', 'pdfUrl']) as String?) ?? '',
-      year: (read(['year']) as String?) ?? '',
+      college: _read(map, ['college']) ?? 'Unknown',
+      branch: _read(map, ['branch']) ?? 'Unknown',
+      semester: _read(map, ['semester']) ?? 'Unknown',
+      subject: _read(map, ['subject']) ?? 'Unknown',
+      examType: _read(map, ['examType', 'exam_type']) ?? 'Unknown',
+      imageUrl: _read(map, ['imageUrl', 'image_url']) ?? '',
+      imagePublicId: _read(map, ['imagePublicId', 'image_public_id']) ?? '',
+      uploadedBy: _read(map, ['uploadedBy', 'userId', 'user_id']) ?? '',
+      uploadedByName:
+          _read(map, [
+            'uploadedByName',
+            'userName',
+            'user_name',
+            'uploaderName',
+          ]) ??
+          '',
       uploadedAt: uploadedAt,
-      status: (read(['status']) as String?) ?? 'pending',
-      views: (read(['views']) as int?) ?? (read(['views']) is String ? int.tryParse(read(['views'])) ?? 0 : 0),
-      downloads: (read(['downloads']) as int?) ?? 0,
-      likes: (read(['likes']) as int?) ?? 0,
-      userId: (read(['userId', 'user_id', 'uploadedBy']) as String?) ?? '',
     );
   }
 
-  /// Convert to Firestore-friendly map (uses camelCase keys).
-  /// Use this when writing/updating documents; consistent naming helps.
+  // ---------------------------------------------------------------------------
+  //  TO MAP
+  // ---------------------------------------------------------------------------
+
   Map<String, dynamic> toMap() {
     return {
       'college': college,
@@ -122,37 +164,17 @@ class QuestionPaper extends Equatable {
       'subject': subject,
       'examType': examType,
       'imageUrl': imageUrl,
-      'pdfUrl': pdfUrl,
-      'year': year,
+      'imagePublicId': imagePublicId,
+      'uploadedBy': uploadedBy,
+      'uploadedByName': uploadedByName,
       'uploadedAt': Timestamp.fromDate(uploadedAt),
-      'status': status,
-      'views': views,
-      'downloads': downloads,
-      'likes': likes,
-      'userId': userId,
     };
   }
 
-  /// Defensive timestamp parser: supports Timestamp, DateTime, int, String
-  static DateTime _parseTimestamp(dynamic timestamp) {
-    if (timestamp == null) return DateTime.now();
+  // ---------------------------------------------------------------------------
+  //  COPYWITH
+  // ---------------------------------------------------------------------------
 
-    if (timestamp is Timestamp) return timestamp.toDate();
-    if (timestamp is DateTime) return timestamp;
-    if (timestamp is int) return DateTime.fromMillisecondsSinceEpoch(timestamp);
-    if (timestamp is String) {
-      try {
-        return DateTime.parse(timestamp);
-      } catch (e) {
-        // try to parse as integer string (ms since epoch)
-        final ms = int.tryParse(timestamp);
-        if (ms != null) return DateTime.fromMillisecondsSinceEpoch(ms);
-      }
-    }
-    return DateTime.now();
-  }
-
-  /// CopyWith for immutability
   QuestionPaper copyWith({
     String? id,
     String? college,
@@ -161,14 +183,10 @@ class QuestionPaper extends Equatable {
     String? subject,
     String? examType,
     String? imageUrl,
-    String? pdfUrl,
-    String? year,
+    String? imagePublicId,
+    String? uploadedBy,
+    String? uploadedByName,
     DateTime? uploadedAt,
-    String? status,
-    int? views,
-    int? downloads,
-    int? likes,
-    String? userId,
   }) {
     return QuestionPaper(
       id: id ?? this.id,
@@ -178,111 +196,40 @@ class QuestionPaper extends Equatable {
       subject: subject ?? this.subject,
       examType: examType ?? this.examType,
       imageUrl: imageUrl ?? this.imageUrl,
-      pdfUrl: pdfUrl ?? this.pdfUrl,
-      year: year ?? this.year,
+      imagePublicId: imagePublicId ?? this.imagePublicId,
+      uploadedBy: uploadedBy ?? this.uploadedBy,
+      uploadedByName: uploadedByName ?? this.uploadedByName,
       uploadedAt: uploadedAt ?? this.uploadedAt,
-      status: status ?? this.status,
-      views: views ?? this.views,
-      downloads: downloads ?? this.downloads,
-      likes: likes ?? this.likes,
-      userId: userId ?? this.userId,
     );
   }
 
-  // ---------- Helpers & computed properties ----------
+  // Cache variable so we don't fetch repeatedly
+  static final Map<String, String> _userNameCache = {};
 
-  bool get hasPdf => pdfUrl.isNotEmpty;
-  bool get isApproved => status.toLowerCase() == 'approved';
-  bool get isPending => status.toLowerCase() == 'pending';
-  bool get isRejected => status.toLowerCase() == 'rejected';
+  Future<void> _fetchAndCacheUserName() async {
+    // If cached, do not fetch again
+    if (_userNameCache.containsKey(uploadedBy)) return;
 
-  String get formattedUploadDate {
-    final now = DateTime.now();
-    final difference = now.difference(uploadedAt);
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uploadedBy)
+          .get();
 
-    if (difference.inDays > 365) {
-      return '${(difference.inDays / 365).floor()} years ago';
-    } else if (difference.inDays > 30) {
-      return '${(difference.inDays / 30).floor()} months ago';
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minutes ago';
-    } else {
-      return 'Just now';
-    }
-  }
+      if (snap.exists) {
+        final data = snap.data() as Map<String, dynamic>?;
+        final name = data?['name'] as String? ?? '';
 
-  /// Similar to previous implementation: "Just now", "5m ago", "2d ago" or date
-  String get shortFormattedDate {
-    final now = DateTime.now();
-    final difference = now.difference(uploadedAt);
+        if (name.isNotEmpty) {
+          _userNameCache[uploadedBy] = name;
 
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        if (difference.inMinutes == 0) return 'Just now';
-        return '${difference.inMinutes}m ago';
+          // Update this instance internally
+          // (your UI must rebuild to reflect updated name)
+          uploadedByName = name;
+        }
       }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return '${uploadedAt.day} ${months[uploadedAt.month - 1]} ${uploadedAt.year}';
+    } catch (e) {
+      print("⚠️ Failed to fetch username for $uploadedBy: $e");
     }
-  }
-
-  bool get isRecent {
-    final now = DateTime.now();
-    final difference = now.difference(uploadedAt);
-    return difference.inDays <= 7;
-  }
-
-  bool get isPopular => likes > 10;
-
-  int? get semesterNumber {
-    final match = RegExp(r'\d+').firstMatch(semester);
-    if (match != null) return int.tryParse(match.group(0)!);
-    return null;
-  }
-
-  String get examTypeAbbr {
-    final lower = examType.toLowerCase();
-    if (lower.contains('mid')) {
-      final match = RegExp(r'\d+').firstMatch(examType);
-      if (match != null) return 'M${match.group(0)}';
-      return 'Mid';
-    } else if (lower.contains('end')) {
-      return 'End';
-    } else if (lower.contains('final')) {
-      return 'Final';
-    }
-    return examType;
-  }
-
-  @override
-  List<Object?> get props => [
-        id,
-        college,
-        branch,
-        semester,
-        subject,
-        examType,
-        imageUrl,
-        pdfUrl,
-        year,
-        uploadedAt,
-        status,
-        views,
-        downloads,
-        likes,
-        userId,
-      ];
-
-  @override
-  String toString() {
-    return 'QuestionPaper(id: $id, subject: $subject, examType: $examType, semester: $semester, college: $college, branch: $branch, likes: $likes, userId: $userId)';
   }
 }

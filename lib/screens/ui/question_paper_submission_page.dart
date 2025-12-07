@@ -509,18 +509,20 @@ class _QuestionPaperSubmissionPageState
 
       _showSnackBar('Saving to database...', isInfo: true);
       final String docId = await _firestoreService
-          .submitToSubmittedPapers(
-            college: selectedCollege!,
-            branch: selectedBranch!,
-            semester: selectedSemester!,
-            subject: selectedSubject!,
-            examType: selectedExamType!,
-            imageUrl: imageUrl,
-          )
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw TimeoutException('Database save timed out'),
-          );
+    .submitToSubmittedPapers(
+      college: selectedCollege!,
+      branch: selectedBranch!,
+      semester: selectedSemester!,
+      subject: selectedSubject!,
+      examType: selectedExamType!,
+      imageUrl: imageUrl,
+      // no userId needed – service handles it
+    )
+    .timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw TimeoutException('Database save timed out'),
+    );
+
 
       developer.log(
         'Submission successful. Firestore Document ID: $docId',
