@@ -8,6 +8,8 @@ class AppTheme {
   static const Color accentColor = Color(0xFFFF6584);
   static const Color backgroundColor = Color(0xFFF5F7FA);
   static const Color surfaceColor = Colors.white;
+  static const Color cardColor = surfaceColor;
+  static const Color borderColor = Color(0xFFE6E9F2);
   static const Color errorColor = Color(0xFFFF5252);
   static const Color textPrimary = Color(0xFF2E3A59);
   static const Color textSecondary = Color(0xFF8F9BB3);
@@ -43,6 +45,9 @@ class AppTheme {
     fontWeight: FontWeight.w400,
     color: textSecondary,
   );
+
+  // Backwards-compatible alias used across the app
+  static TextStyle subheadingStyle = subHeadingStyle;
 
   static TextStyle buttonTextStyle = GoogleFonts.poppins(
     fontSize: 16,
@@ -120,7 +125,7 @@ class AppTheme {
   // Box Shadow
   static List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.08),
+      color: Colors.black.withOpacity(0.08),
       blurRadius: 20,
       offset: const Offset(0, 4),
     ),
@@ -128,7 +133,7 @@ class AppTheme {
 
   static List<BoxShadow> buttonShadow = [
     BoxShadow(
-      color: primaryColor.withValues(alpha: 0.3),
+      color: primaryColor.withOpacity(0.3),
       blurRadius: 16,
       offset: const Offset(0, 8),
     ),

@@ -90,7 +90,8 @@ flutter:
     - .env
 
 # Launcher icon configuration (generate app icons from a single image)
-flutter_icons:
+# Launcher icon configuration (generate app icons from a single image)
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/Logo.png"

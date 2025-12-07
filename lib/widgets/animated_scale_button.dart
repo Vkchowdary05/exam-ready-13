@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Enhanced animated button with scale, haptic feedback, and accessibility
+/// Enhanced animated button with subtle scale effect and haptic feedback
+/// Designed for a calm, professional user experience
 class AnimatedScaleButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onPressed;
@@ -16,8 +17,8 @@ class AnimatedScaleButton extends StatefulWidget {
     required this.child,
     this.onPressed,
     this.isLoading = false,
-    this.duration = const Duration(milliseconds: 150),
-    this.scaleFactor = 0.95,
+    this.duration = const Duration(milliseconds: 120),
+    this.scaleFactor = 0.97,
     this.enableHapticFeedback = true,
     this.semanticLabel,
   });
@@ -35,11 +36,19 @@ class _AnimatedScaleButtonState extends State<AnimatedScaleButton>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(duration: widget.duration, vsync: this);
+    _controller = AnimationController(
+      duration: widget.duration,
+      vsync: this,
+    );
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: widget.scaleFactor,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   @override
@@ -92,13 +101,14 @@ class _AnimatedScaleButtonState extends State<AnimatedScaleButton>
         onTapDown: _handleTapDown,
         onTapUp: _handleTapUp,
         onTapCancel: _handleTapCancel,
+        behavior: HitTestBehavior.opaque,
         child: AnimatedBuilder(
           animation: _scaleAnimation,
           builder: (context, child) {
             return Transform.scale(
               scale: _scaleAnimation.value,
               child: Opacity(
-                opacity: widget.isLoading ? 0.7 : 1.0,
+                opacity: widget.isLoading ? 0.6 : 1.0,
                 child: widget.child,
               ),
             );

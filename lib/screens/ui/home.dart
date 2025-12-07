@@ -10,6 +10,7 @@ import 'package:exam_ready/widgets/animated_scale_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -21,9 +22,17 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
-  late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+
+  static const Color primaryColor = Color(0xFF6366F1);
+  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color cardColor = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color borderColor = Color(0xFFE2E8F0);
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentTeal = Color(0xFF06B6D4);
 
   @override
   void initState() {
@@ -32,29 +41,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
 
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeIn,
+      curve: Curves.easeOutCubic,
     );
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
-
     _fadeController.forward();
-    _slideController.forward();
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
-    _slideController.dispose();
     super.dispose();
   }
 
@@ -66,78 +64,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF1976D2),
-              const Color(0xFF1565C0),
-              const Color(0xFF0D47A1),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
-                  ),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 10),
-                            _buildQuickActions(),
-                            const SizedBox(height: 30),
-                            const Text(
-                              'Statistics',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildStatsGrid(),
-                            const SizedBox(height: 30),
-                            const Text(
-                              'Recent Activity',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildRecentActivity(
-                              recentActivity,
-                              recentQuestionPapers,
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildQuickActions(),
+                          const SizedBox(height: 40),
+                          _buildSectionTitle('Overview'),
+                          const SizedBox(height: 20),
+                          _buildStatsGrid(),
+                          const SizedBox(height: 40),
+                          _buildSectionTitle('Recent Activity'),
+                          const SizedBox(height: 20),
+                          _buildRecentActivity(
+                            recentActivity,
+                            recentQuestionPapers,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -145,43 +109,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Welcome Back!',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Exam Ready',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              Text(
+                'Welcome Back',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: textSecondary,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
+                ),
               ),
-              Row(
-                children: [
-                  _buildHeaderIcon(Icons.notifications_outlined, () {
-                    _showNotifications();
-                  }),
-                  const SizedBox(width: 12),
-                  _buildHeaderIcon(Icons.settings_outlined, () {
-                    _showSettings();
-                  }),
-                ],
+              const SizedBox(height: 6),
+              Text(
+                'Exam Ready',
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  color: textPrimary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.8,
+                ),
               ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildHeaderIcon(Icons.notifications_none_rounded, () {
+                _showNotifications();
+              }),
+              const SizedBox(width: 12),
+              _buildHeaderIcon(Icons.settings_outlined, () {
+                _showSettings();
+              }),
             ],
           ),
         ],
@@ -190,15 +165,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildHeaderIcon(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
+    return AnimatedScaleButton(
+      onPressed: onTap,
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(51),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: 1),
         ),
-        child: Icon(icon, color: Colors.white, size: 24),
+        child: Icon(icon, color: textSecondary, size: 22),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.inter(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: textPrimary,
+        letterSpacing: -0.5,
       ),
     );
   }
@@ -209,9 +197,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         Expanded(
           child: _buildActionCard(
             'Search Papers',
-            Icons.search,
-            const Color(0xFF667EEA),
-            const Color(0xFF764BA2),
+            Icons.search_rounded,
+            primaryColor,
             () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -224,10 +211,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         const SizedBox(width: 16),
         Expanded(
           child: _buildActionCard(
-            'Search questions',
-            Icons.upload_file,
-            const Color(0xFFF093FB),
-            const Color(0xFFF5576C),
+            'Browse Topics',
+            Icons.auto_stories_rounded,
+            accentPurple,
             () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -244,40 +230,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildActionCard(
     String title,
     IconData icon,
-    Color startColor,
-    Color endColor,
+    Color color,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
-      onTap: onTap,
+    return AnimatedScaleButton(
+      onPressed: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [startColor, endColor],
+            colors: [
+              color.withOpacity(0.08),
+              color.withOpacity(0.04),
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.15), width: 1),
           boxShadow: [
             BoxShadow(
-              color: startColor.withAlpha(77),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: color.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 32),
-            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+              style: GoogleFonts.inter(
+                color: textPrimary,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
               ),
             ),
           ],
@@ -289,14 +286,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildStatsGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsive grid based on screen width
         int crossAxisCount;
         if (constraints.maxWidth < 600) {
-          crossAxisCount = 1; // Mobile: single column
+          crossAxisCount = 2;
         } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 2; // Tablet: two columns
+          crossAxisCount = 2;
         } else {
-          crossAxisCount = 3; // Desktop: three columns
+          crossAxisCount = 4;
         }
 
         return GridView.count(
@@ -305,34 +301,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: constraints.maxWidth < 600 ? 2.0 : 1.3,
-          children: [
+          childAspectRatio: constraints.maxWidth < 600 ? 1.4 : 1.3,
+          children: const [
             _StatCardFromFirestore(
               title: 'Colleges',
-              icon: Icons.school,
+              icon: Icons.school_outlined,
               collection: 'colleges',
-              color: const Color(0xFF4CAF50),
+              color: primaryColor,
               delay: 0,
             ),
             _StatCardFromFirestore(
               title: 'Exam Papers',
-              icon: Icons.description,
+              icon: Icons.description_outlined,
               collection: 'question_papers',
-              color: const Color(0xFF2196F3),
+              color: accentPurple,
               delay: 100,
             ),
             _StatCardFromFirestore(
               title: 'Branches',
-              icon: Icons.layers,
+              icon: Icons.account_tree_outlined,
               collection: 'branches',
-              color: const Color(0xFFFF9800),
+              color: accentBlue,
               delay: 200,
             ),
             _StatCardFromFirestore(
               title: 'Active Users',
-              icon: Icons.people,
+              icon: Icons.people_outline_rounded,
               collection: 'users',
-              color: const Color(0xFF9C27B0),
+              color: accentTeal,
               delay: 300,
             ),
           ],
@@ -347,11 +343,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   ) {
     return Column(
       children: [
-        // Recent Activity Feed
         recentActivity.when(
           data: (activities) {
             if (activities.isEmpty) {
-              return _buildEmptyState('No recent activity', Icons.timeline);
+              return _buildEmptyState('No recent activity', Icons.timeline_rounded);
             }
             return Column(
               children: activities.take(3).map((activity) {
@@ -372,22 +367,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           error: (error, stackTrace) =>
               _buildErrorState('Failed to load activity'),
         ),
-
         const SizedBox(height: 16),
-
-        // Recent Question Papers
         recentQuestionPapers.when(
           data: (papers) {
             if (papers.isEmpty) {
-              return _buildEmptyState('No recent papers', Icons.description);
+              return _buildEmptyState('No recent papers', Icons.description_outlined);
             }
             return Column(
               children: papers.take(2).map((paper) {
                 return _buildActivityItem(
                   'New paper added',
                   '${paper.subject} - ${paper.college}',
-                  Icons.add_circle_outline,
-                  const Color(0xFF4CAF50),
+                  Icons.library_add_check_outlined,
+                  primaryColor,
                   _formatTimestamp(paper.uploadedAt),
                 );
               }).toList(),
@@ -412,19 +404,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     String time,
   ) {
     return AnimatedScaleButton(
-      onPressed: () {
-        // Handle activity item tap
-      },
+      onPressed: () {},
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 12,
               offset: const Offset(0, 2),
             ),
           ],
@@ -432,12 +423,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(11),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.12),
+                    color.withOpacity(0.06),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -446,20 +444,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C3E50),
+                      color: textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF7C8BA0),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w400,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -467,7 +467,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
             Text(
               time,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF95A5A6)),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -477,26 +481,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildEmptyState(String message, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Center(
         child: Column(
           children: [
-            Icon(icon, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, size: 40, color: textSecondary.withOpacity(0.4)),
+            ),
+            const SizedBox(height: 16),
             Text(
               message,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: GoogleFonts.inter(
+                color: textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -506,18 +515,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildErrorState(String message) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
+        color: const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFFECACA), width: 1),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDC2626).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 20),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.red)),
+            child: Text(
+              message,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFDC2626),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
@@ -527,30 +550,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   IconData _getActivityIcon(String? type) {
     switch (type) {
       case 'paper_added':
-        return Icons.add_circle_outline;
+        return Icons.library_add_check_outlined;
       case 'user_login':
-        return Icons.login;
+        return Icons.login_rounded;
       case 'user_signup':
-        return Icons.person_add;
+        return Icons.person_add_alt_outlined;
       case 'paper_viewed':
-        return Icons.visibility;
+        return Icons.visibility_outlined;
       default:
-        return Icons.timeline;
+        return Icons.timeline_rounded;
     }
   }
 
   Color _getActivityColor(String? type) {
     switch (type) {
       case 'paper_added':
-        return const Color(0xFF4CAF50);
+        return primaryColor;
       case 'user_login':
-        return const Color(0xFF2196F3);
+        return accentBlue;
       case 'user_signup':
-        return const Color(0xFF9C27B0);
+        return accentPurple;
       case 'paper_viewed':
-        return const Color(0xFFFF9800);
+        return accentTeal;
       default:
-        return const Color(0xFF607D8B);
+        return textSecondary;
     }
   }
 
@@ -589,44 +612,130 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         );
       },
-      backgroundColor: const Color(0xFF667EEA),
-      icon: const Icon(Icons.add),
-      label: const Text('Add Paper'),
-      elevation: 8,
+      backgroundColor: primaryColor,
+      elevation: 4,
+      icon: const Icon(Icons.add_rounded, size: 22),
+      label: Text(
+        'Add Paper',
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          letterSpacing: -0.2,
+        ),
+      ),
     );
   }
 
   void _showNotifications() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Notifications',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(
-                Icons.notifications,
-                color: Color(0xFF4CAF50),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: borderColor,
+                borderRadius: BorderRadius.circular(2),
               ),
-              title: const Text('New papers available'),
-              subtitle: const Text('5 new papers in your subjects'),
             ),
-            ListTile(
-              leading: const Icon(Icons.update, color: Color(0xFF2196F3)),
-              title: const Text('System update'),
-              subtitle: const Text('New features added'),
+            const SizedBox(height: 24),
+            Text(
+              'Notifications',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+                letterSpacing: -0.5,
+              ),
             ),
+            const SizedBox(height: 24),
+            _buildNotificationItem(
+              'New papers available',
+              '5 new papers in your subjects',
+              Icons.description_outlined,
+              primaryColor,
+            ),
+            _buildNotificationItem(
+              'System update',
+              'New features added',
+              Icons.update_outlined,
+              accentBlue,
+            ),
+            const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color.withOpacity(0.12),
+                  color.withOpacity(0.06),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -634,38 +743,107 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   void _showSettings() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Settings',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: borderColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Profile'),
-              onTap: () {
+            const SizedBox(height: 24),
+            Text(
+              'Settings',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSettingItem(
+              'Profile',
+              Icons.person_outline_rounded,
+              () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.dark_mode),
-              title: const Text('Dark Mode'),
-              trailing: Switch(value: false, onChanged: (val) {}),
+            _buildSettingItem(
+              'Dark Mode',
+              Icons.dark_mode_outlined,
+              () {},
+              trailing: Switch(
+                value: false,
+                onChanged: (val) {},
+                activeColor: primaryColor,
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text('Language'),
-              onTap: () {},
+            _buildSettingItem(
+              'Language',
+              Icons.language_outlined,
+              () {},
             ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingItem(
+    String title,
+    IconData icon,
+    VoidCallback onTap, {
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: textSecondary, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: textPrimary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+            if (trailing != null)
+              trailing
+            else
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: textSecondary,
+              ),
           ],
         ),
       ),
@@ -694,110 +872,130 @@ class _StatCardFromFirestore extends StatefulWidget {
 
 class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
     with TickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late AnimationController _counterController;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _scaleController = AnimationController(
+    _controller = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _counterController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
+    
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
     );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
-        _scaleController.forward();
-        _counterController.forward();
+        _controller.forward();
       }
     });
   }
 
   @override
   void dispose() {
-    _scaleController.dispose();
-    _counterController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 600 + widget.delay),
-      curve: Curves.easeOutBack,
-      builder: (context, animValue, child) {
-        return Transform.scale(
-          scale: animValue,
-          child: StreamBuilder<int>(
-            stream: _fetchCount(widget.collection),
-            builder: (context, snapshot) {
-              final count = snapshot.data ?? 0;
-              return Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.color.withAlpha(26),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: StreamBuilder<int>(
+          stream: _fetchCount(widget.collection),
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: widget.color.withAlpha(26),
-                        borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.color.withOpacity(0.12),
+                          widget.color.withOpacity(0.06),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: Icon(widget.icon, color: widget.color, size: 28),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (snapshot.connectionState == ConnectionState.waiting)
-                          Container(
-                            width: 50,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          )
-                        else
-                          _AnimatedCounter(
-                            count: count,
-                            controller: _counterController,
-                            color: widget.color,
+                    child: Icon(widget.icon, color: widget.color, size: 26),
+                  ),
+                  const SizedBox(height: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        Container(
+                          width: 50,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        const SizedBox(height: 4),
+                        )
+                      else
                         Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF7C8BA0),
-                            fontWeight: FontWeight.w500,
+                          count.toString(),
+                          style: GoogleFonts.inter(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                            letterSpacing: -1,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -816,43 +1014,12 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
       return Stream.value(20);
     }
     if (collection == 'users') {
-  return FirebaseFirestore.instance
-      .collection('users')
-      .snapshots()
-      .map((snapshot) => snapshot.docs.length);
-}
+      return FirebaseFirestore.instance
+          .collection('users')
+          .snapshots()
+          .map((snapshot) => snapshot.docs.length);
+    }
 
-    // Optional: handle unsupported collections
     return Stream.value(0);
-  }
-}
-
-class _AnimatedCounter extends StatelessWidget {
-  final int count;
-  final AnimationController controller;
-  final Color color;
-
-  const _AnimatedCounter({
-    required this.count,
-    required this.controller,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        final animatedCount = (count * controller.value).toInt();
-        return Text(
-          animatedCount.toString(),
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        );
-      },
-    );
   }
 }

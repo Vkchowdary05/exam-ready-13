@@ -54,55 +54,69 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
   }
 
   Widget _buildLoadingState() {
     return Container(
-      color: const Color(0xFF1A1A2E),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade50,
+            Colors.white,
+            Colors.blue.shade50.withOpacity(0.3),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildModernBackButton(),
               ),
             ),
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(
-                      color: Color(0xFF667EEA),
-                      strokeWidth: 3,
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.shade100.withOpacity(0.5),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: CircularProgressIndicator(
+                        color: Colors.blue.shade600,
+                        strokeWidth: 3,
+                      ),
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     Text(
                       'Loading paper details...',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.grey.shade700,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
@@ -117,26 +131,25 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
 
   Widget _buildNotFoundState() {
     return Container(
-      color: const Color(0xFF1A1A2E),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade50,
+            Colors.white,
+            Colors.orange.shade50.withOpacity(0.3),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildModernBackButton(),
               ),
             ),
             Expanded(
@@ -144,26 +157,35 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.search_off_rounded,
-                      size: 100,
-                      color: Colors.white.withAlpha(77),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Paper Not Found',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.search_off_rounded,
+                        size: 64,
+                        color: Colors.orange.shade300,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Paper Not Found',
+                      style: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       'This paper may have been deleted',
                       style: TextStyle(
-                        color: Colors.white.withAlpha(179),
-                        fontSize: 16,
+                        color: Colors.grey.shade500,
+                        fontSize: 15,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
@@ -178,26 +200,25 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
 
   Widget _buildErrorState(String error) {
     return Container(
-      color: const Color(0xFF1A1A2E),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade50,
+            Colors.white,
+            Colors.red.shade50.withOpacity(0.3),
+          ],
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildModernBackButton(),
               ),
             ),
             Expanded(
@@ -207,26 +228,35 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 100,
-                        color: Colors.red[300],
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.error_outline_rounded,
+                          size: 64,
+                          color: Colors.red.shade300,
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Something Went Wrong',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.grey.shade800,
                           fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         error,
                         style: TextStyle(
-                          color: Colors.white.withAlpha(179),
-                          fontSize: 16,
+                          color: Colors.grey.shade500,
+                          fontSize: 15,
+                          letterSpacing: 0.2,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -241,12 +271,38 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     );
   }
 
-  // Helper Methods
+  Widget _buildModernBackButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => Navigator.pop(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.grey.shade700,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   bool _checkDeletePermission(QuestionPaper paper) {
-    // TODO: Implement proper authentication check
-    // In production, check if current user ID matches paper.uploadedBy
-    // or if user is admin
     return true;
   }
 
@@ -269,14 +325,14 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                         ? null
                         : event.cumulativeBytesLoaded /
                               (event.expectedTotalBytes ?? 1),
-                    color: const Color(0xFF667EEA),
+                    color: Colors.blue.shade400,
                   ),
                 ),
                 errorBuilder: (context, error, stackTrace) => const Center(
                   child: Icon(
                     Icons.error_outline_rounded,
                     color: Colors.white,
-                    size: 80,
+                    size: 64,
                   ),
                 ),
               ),
@@ -285,7 +341,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                   padding: const EdgeInsets.all(16),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(128),
+                      color: Colors.black.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
@@ -306,7 +362,6 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   void _downloadPaper(QuestionPaper paper) {
-    // TODO: Implement actual download functionality
     _showSnackBar('Download feature coming soon!', isSuccess: true);
   }
 
@@ -314,17 +369,42 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(24),
         title: Row(
           children: [
-            Icon(Icons.warning_rounded, color: Colors.orange[700], size: 28),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.warning_rounded,
+                color: Colors.orange.shade700,
+                size: 24,
+              ),
+            ),
             const SizedBox(width: 12),
-            const Text('Confirm Delete'),
+            const Text(
+              'Confirm Delete',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
+            ),
           ],
         ),
         content: Text(
           'Are you sure you want to delete this question paper? This action cannot be undone.',
-          style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey.shade600,
+            height: 1.5,
+            letterSpacing: 0.2,
+          ),
         ),
         actions: [
           TextButton(
@@ -332,36 +412,36 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
+                color: Colors.grey.shade600,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement actual delete functionality
               setState(() => _isDeleting = true);
-              // Simulate deletion
               Future.delayed(const Duration(seconds: 2), () {
                 if (mounted) {
-                  Navigator.pop(context); // Pop details page
+                  Navigator.pop(context);
                   _showSnackBar('Paper deleted successfully', isSuccess: true);
                 }
               });
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
+              backgroundColor: Colors.red.shade600,
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             child: const Text(
               'Delete',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -373,74 +453,87 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Share Paper',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A2E),
+              const SizedBox(height: 24),
+              Text(
+                'Share Paper',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                  letterSpacing: -0.3,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              paper.subject,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildShareOption(
-                    icon: Icons.link_rounded,
-                    label: 'Copy Link',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showSnackBar('Link copied!', isSuccess: true);
-                    },
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  paper.subject,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.2,
                   ),
-                  _buildShareOption(
-                    icon: Icons.message_rounded,
-                    label: 'Message',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showSnackBar('Share via message', isSuccess: true);
-                    },
-                  ),
-                  _buildShareOption(
-                    icon: Icons.more_horiz_rounded,
-                    label: 'More',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showSnackBar('More options', isSuccess: true);
-                    },
-                  ),
-                ],
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildShareOption(
+                      icon: Icons.link_rounded,
+                      label: 'Copy Link',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showSnackBar('Link copied!', isSuccess: true);
+                      },
+                    ),
+                    _buildShareOption(
+                      icon: Icons.message_rounded,
+                      label: 'Message',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showSnackBar('Share via message', isSuccess: true);
+                      },
+                    ),
+                    _buildShareOption(
+                      icon: Icons.more_horiz_rounded,
+                      label: 'More',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showSnackBar('More options', isSuccess: true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
@@ -453,33 +546,35 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade400, Colors.blue.shade600],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF667EEA).withAlpha(77),
+                  color: Colors.blue.shade200.withOpacity(0.4),
                   blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -505,23 +600,31 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                   ? Icons.check_circle_outline_rounded
                   : Icons.info_outline_rounded,
               color: Colors.white,
-              size: 22,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(message, style: const TextStyle(fontSize: 15)),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ),
           ],
         ),
         backgroundColor: isError
-            ? const Color(0xFFE53935)
+            ? Colors.red.shade600
             : isSuccess
-            ? const Color(0xFF43A047)
-            : const Color(0xFF667EEA),
+            ? Colors.green.shade600
+            : Colors.blue.shade600,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 3),
+        elevation: 0,
       ),
     );
   }
@@ -537,7 +640,6 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     final paperAsync = ref.watch(paperDetailsProvider(widget.paperId));
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
       body: paperAsync.when(
         data: (paper) {
           if (paper == null) {
@@ -552,22 +654,37 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   Widget _buildPaperDetails(QuestionPaper paper) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: CustomScrollView(
-        slivers: [
-          _buildAppBar(paper),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildImageSection(paper),
-                _buildInfoSection(paper),
-                _buildActionButtons(paper),
-                const SizedBox(height: 40),
-              ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade50,
+            Colors.white,
+            Colors.blue.shade50.withOpacity(0.2),
+          ],
+        ),
+      ),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            _buildAppBar(paper),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  _buildImageSection(paper),
+                  _buildInfoSection(paper),
+                  _buildActionButtons(paper),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -577,32 +694,42 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
       expandedHeight: 0,
       floating: true,
       pinned: true,
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Colors.white.withOpacity(0.95),
       elevation: 0,
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(51),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: _buildModernBackButton(),
       ),
       actions: [
-        Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(51),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.white),
-            onPressed: () => _showShareDialog(paper),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showShareDialog(paper),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.share_rounded,
+                    color: Colors.grey.shade700,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -615,87 +742,86 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
       child: GestureDetector(
         onTap: () => _showFullScreenImage(paper.imageUrl),
         child: Container(
-          margin: const EdgeInsets.all(20),
-          height: 500,
+          margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(77),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                Image.network(
-                  paper.imageUrl,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(color: Colors.white),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.grey[300]!, Colors.grey[200]!],
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.broken_image_rounded,
-                          color: Colors.grey[500],
-                          size: 80,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                Positioned(
-                  bottom: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(179),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(
-                          Icons.zoom_in_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Tap to zoom',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+            borderRadius: BorderRadius.circular(20),
+            child: AspectRatio(
+              aspectRatio: 3 / 4,
+              child: Stack(
+                children: [
+                  Image.network(
+                    paper.imageUrl,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Shimmer.fromColors(
+                        baseColor: Colors.grey.shade200,
+                        highlightColor: Colors.grey.shade50,
+                        child: Container(color: Colors.white),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade100,
+                        child: Center(
+                          child: Icon(
+                            Icons.broken_image_rounded,
+                            color: Colors.grey.shade400,
+                            size: 64,
                           ),
                         ),
-                      ],
+                      );
+                    },
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.zoom_in_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Tap to zoom',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -705,32 +831,29 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
 
   Widget _buildInfoSection(QuestionPaper paper) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667EEA).withAlpha(102),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Paper Details',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 20),
@@ -783,10 +906,10 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(51),
+                color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: Colors.blue.shade600, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -797,17 +920,19 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                     label,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withAlpha(179),
+                      color: Colors.grey.shade500,
                       fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade800,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
@@ -817,7 +942,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
         ),
         if (!isLast) ...[
           const SizedBox(height: 16),
-          Divider(color: Colors.white.withAlpha(51), height: 1),
+          Divider(color: Colors.grey.shade200, height: 1),
           const SizedBox(height: 16),
         ],
       ],
@@ -828,15 +953,13 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     final bool canDelete = _checkDeletePermission(paper);
 
     return Container(
-      margin: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           _buildActionButton(
             icon: Icons.download_rounded,
             label: 'Download Paper',
-            gradient: const LinearGradient(
-              colors: [Color(0xFF43A047), Color(0xFF66BB6A)],
-            ),
+            color: Colors.green.shade600,
             onTap: () => _downloadPaper(paper),
           ),
           if (canDelete) ...[
@@ -844,9 +967,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             _buildActionButton(
               icon: Icons.delete_rounded,
               label: _isDeleting ? 'Deleting...' : 'Delete Paper',
-              gradient: LinearGradient(
-                colors: [Colors.red[700]!, Colors.red[500]!],
-              ),
+              color: Colors.red.shade600,
               onTap: _isDeleting ? null : () => _confirmDelete(paper),
               isLoading: _isDeleting,
             ),
@@ -859,7 +980,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   Widget _buildActionButton({
     required IconData icon,
     required String label,
-    required Gradient gradient,
+    required Color color,
     required VoidCallback? onTap,
     bool isLoading = false,
   }) {
@@ -867,44 +988,44 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(20),
+            color: color,
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: gradient.colors.first.withAlpha(102),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+                color: color.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: isLoading
               ? const Center(
                   child: SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(
                       color: Colors.white,
-                      strokeWidth: 3,
+                      strokeWidth: 2.5,
                     ),
                   ),
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(icon, color: Colors.white, size: 24),
-                    const SizedBox(width: 12),
+                    Icon(icon, color: Colors.white, size: 22),
+                    const SizedBox(width: 10),
                     Text(
                       label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
@@ -934,26 +1055,24 @@ class _PaperCardState extends State<PaperCard>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-
     _scaleAnimation = Tween<double>(
-      begin: 0.8,
+      begin: 0.9,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    Future.delayed(Duration(milliseconds: widget.index * 100), () {
+    Future.delayed(Duration(milliseconds: widget.index * 60), () {
       if (mounted) {
         _controller.forward();
       }
@@ -979,7 +1098,6 @@ class _PaperCardState extends State<PaperCard>
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
-                // Navigate to enhanced PaperDetailPage
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -988,146 +1106,120 @@ class _PaperCardState extends State<PaperCard>
                   ),
                 );
               },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withAlpha(115),
-                          Colors.white.withAlpha(64),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withAlpha(102),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(20),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (widget.paper.imageUrl.isNotEmpty)
-                          Hero(
-                            tag: 'paper_${widget.paper.id}',
-                            child: AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: CachedNetworkImage(
-                                imageUrl: widget.paper.imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.grey.shade200,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey.shade200,
-                                  child: Icon(
-                                    Icons.description_rounded,
-                                    size: 64,
-                                    color: Colors.grey.shade400,
-                                  ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.paper.imageUrl.isNotEmpty)
+                      Hero(
+                        tag: 'paper${widget.paper.id}',
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: CachedNetworkImage(
+                              imageUrl: widget.paper.imageUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Shimmer.fromColors(
+                                baseColor: Colors.grey.shade200,
+                                highlightColor: Colors.grey.shade50,
+                                child: Container(color: Colors.white),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey.shade100,
+                                child: Icon(
+                                  Icons.description_rounded,
+                                  size: 48,
+                                  color: Colors.grey.shade400,
                                 ),
                               ),
                             ),
                           ),
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.paper.subject,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
+                              letterSpacing: -0.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
-                              Text(
-                                widget.paper.subject,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                    ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                              _buildInfoChip(
+                                widget.paper.examType,
+                                Icons.assignment_rounded,
                               ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  _buildInfoChip(
-                                    context,
-                                    widget.paper.examType,
-                                    Icons.assignment_rounded,
-                                  ),
-                                  _buildInfoChip(
-                                    context,
-                                    widget.paper.semester,
-                                    Icons.calendar_today_rounded,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_on_rounded,
-                                      size: 14,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.secondary,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        '${widget.paper.branch} • ${widget.paper.college}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.secondary,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              _buildInfoChip(
+                                widget.paper.semester,
+                                Icons.calendar_today_rounded,
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  size: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    '${widget.paper.branch} • ${widget.paper.college}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -1137,27 +1229,26 @@ class _PaperCardState extends State<PaperCard>
     );
   }
 
-  Widget _buildInfoChip(BuildContext context, String label, IconData icon) {
+  Widget _buildInfoChip(String label, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+        color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.blue.shade100, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+          Icon(icon, size: 14, color: Colors.blue.shade600),
           const SizedBox(width: 6),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.blue.shade700,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -1169,7 +1260,6 @@ class _PaperCardState extends State<PaperCard>
 // ============================================================================
 // FILTER CARD WIDGET
 // ============================================================================
-
 class FilterCard extends StatelessWidget {
   final String? selectedCollege;
   final String? selectedBranch;
@@ -1182,7 +1272,6 @@ class FilterCard extends StatelessWidget {
   final ValueChanged<String?> onSubjectChanged;
   final ValueChanged<String?> onExamTypeChanged;
   final VoidCallback onSearch;
-
   const FilterCard({
     super.key,
     required this.selectedCollege,
@@ -1197,13 +1286,11 @@ class FilterCard extends StatelessWidget {
     required this.onExamTypeChanged,
     required this.onSearch,
   });
-
   @override
   Widget build(BuildContext context) {
     final branches = selectedCollege != null
         ? collegeData[selectedCollege] ?? []
         : <String>[];
-
     final List<String> subjects;
     if (selectedBranch != null && selectedSemester != null) {
       subjects = subjectData[selectedBranch!]?[selectedSemester!] ?? <String>[];
@@ -1211,90 +1298,92 @@ class FilterCard extends StatelessWidget {
       subjects = <String>[];
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.4),
-                Colors.white.withOpacity(0.15),
-              ],
-            ),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.5),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 30,
-                offset: const Offset(0, 12),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  'Filter Papers',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.filter_list_rounded,
+                    size: 20,
+                    color: Colors.blue.shade600,
                   ),
                 ),
-                const SizedBox(height: 20),
-                ModernDropdown(
-                  label: 'College',
-                  icon: Icons.school_rounded,
-                  value: selectedCollege,
-                  items: collegeData.keys.toList(),
-                  onChanged: onCollegeChanged,
+                const SizedBox(width: 12),
+                Text(
+                  'Filter Papers',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Branch',
-                  icon: Icons.account_tree_rounded,
-                  value: selectedBranch,
-                  items: branches,
-                  onChanged: onBranchChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Semester',
-                  icon: Icons.calendar_today_rounded,
-                  value: selectedSemester,
-                  items: semesters,
-                  onChanged: onSemesterChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Subject',
-                  icon: Icons.book_rounded,
-                  value: selectedSubject,
-                  items: subjects,
-                  onChanged: onSubjectChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Exam Type',
-                  icon: Icons.assignment_rounded,
-                  value: selectedExamType,
-                  items: examTypes,
-                  onChanged: onExamTypeChanged,
-                ),
-                const SizedBox(height: 24),
-                SearchButton(isLoading: false, onPressed: onSearch),
               ],
             ),
-          ),
+            const SizedBox(height: 20),
+            ModernDropdown(
+              label: 'College',
+              icon: Icons.school_rounded,
+              value: selectedCollege,
+              items: collegeData.keys.toList(),
+              onChanged: onCollegeChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Branch',
+              icon: Icons.account_tree_rounded,
+              value: selectedBranch,
+              items: branches,
+              onChanged: onBranchChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Semester',
+              icon: Icons.calendar_today_rounded,
+              value: selectedSemester,
+              items: semesters,
+              onChanged: onSemesterChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Subject',
+              icon: Icons.book_rounded,
+              value: selectedSubject,
+              items: subjects,
+              onChanged: onSubjectChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Exam Type',
+              icon: Icons.assignment_rounded,
+              value: selectedExamType,
+              items: examTypes,
+              onChanged: onExamTypeChanged,
+            ),
+            const SizedBox(height: 20),
+            SearchButton(isLoading: false, onPressed: onSearch),
+          ],
         ),
       ),
     );
@@ -1304,14 +1393,12 @@ class FilterCard extends StatelessWidget {
 // ============================================================================
 // MODERN DROPDOWN WIDGET
 // ============================================================================
-
 class ModernDropdown extends StatelessWidget {
   final String label;
   final IconData icon;
   final String? value;
   final List<String> items;
   final ValueChanged<String?>? onChanged;
-
   const ModernDropdown({
     super.key,
     required this.label,
@@ -1320,44 +1407,45 @@ class ModernDropdown extends StatelessWidget {
     required this.items,
     required this.onChanged,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.5),
-            Colors.white.withOpacity(0.2),
-          ],
-        ),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade200, width: 1),
       ),
       child: DropdownButtonFormField<String>(
         value: value,
         items: items
-            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .map(
+              (item) => DropdownMenuItem(
+                value: item,
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade800,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            )
             .toList(),
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon),
+          labelStyle: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 14,
+            horizontal: 16,
+            vertical: 16,
           ),
           floatingLabelBehavior: FloatingLabelBehavior.never,
         ),
@@ -1366,7 +1454,8 @@ class ModernDropdown extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         icon: Icon(
           Icons.expand_more_rounded,
-          color: Theme.of(context).colorScheme.primary,
+          color: Colors.grey.shade600,
+          size: 22,
         ),
       ),
     );
@@ -1376,51 +1465,43 @@ class ModernDropdown extends StatelessWidget {
 // ============================================================================
 // SEARCH BUTTON WIDGET
 // ============================================================================
-
 class SearchButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
-
   const SearchButton({
     super.key,
     required this.isLoading,
     required this.onPressed,
   });
-
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: double.infinity,
-      height: 56,
+      height: 54,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
-          ],
+          colors: [Colors.blue.shade600, Colors.blue.shade700],
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.blue.shade200.withOpacity(0.5),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: isLoading ? null : onPressed,
           child: Center(
             child: isLoading
                 ? const SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: 22,
+                    height: 22,
                     child: CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2.5,
@@ -1428,20 +1509,17 @@ class SearchButton extends StatelessWidget {
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.search_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
+                    children: const [
+                      Icon(Icons.search_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 10),
                       Text(
                         'Search Papers',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ],
                   ),
@@ -1454,7 +1532,6 @@ class SearchButton extends StatelessWidget {
 
 class SearchQuestionPaperPage extends ConsumerStatefulWidget {
   const SearchQuestionPaperPage({super.key});
-
   @override
   ConsumerState<SearchQuestionPaperPage> createState() =>
       _SearchQuestionPaperPageState();
@@ -1466,36 +1543,31 @@ class _SearchQuestionPaperPageState
   late AnimationController _headerController;
   late AnimationController _filterPanelController;
   late Animation<Offset> _slideAnimation;
-
   String? _selectedCollege;
   String? _selectedBranch;
   String? _selectedSemester;
   String? _selectedSubject;
   String? _selectedExamType;
-
   final ScrollController _scrollController = ScrollController();
   List<QuestionPaper> _papers = [];
   DocumentSnapshot? _lastDocument;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-
   StreamSubscription<List<QuestionPaper>>? _searchSubscription;
-
   @override
   void initState() {
     super.initState();
     _headerController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     )..forward();
-
     _filterPanelController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     )..forward();
 
     _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, -0.5), end: Offset.zero).animate(
+        Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
           CurvedAnimation(
             parent: _filterPanelController,
             curve: Curves.easeOut,
@@ -1526,7 +1598,6 @@ class _SearchQuestionPaperPageState
 
   Future<void> _loadMorePapers() async {
     if (_isLoadingMore || !_hasMore) return;
-
     setState(() {
       _isLoadingMore = true;
     });
@@ -1574,7 +1645,10 @@ class _SearchQuestionPaperPageState
             _isLoadingMore = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading papers: $error')),
+            SnackBar(
+              content: Text('Error loading papers: $error'),
+              backgroundColor: Colors.red.shade600,
+            ),
           );
         }
       },
@@ -1597,18 +1671,19 @@ class _SearchQuestionPaperPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: FadeTransition(
           opacity: _headerController,
-          child: const Text(
-            'Search Exam Papers',
+          child: Text(
+            'Search Papers',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              fontSize: 22,
               letterSpacing: -0.5,
+              color: Colors.grey.shade800,
             ),
           ),
         ),
@@ -1616,186 +1691,208 @@ class _SearchQuestionPaperPageState
           ScaleTransition(
             scale: _headerController,
             child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 24),
-                onPressed: () {
-                  setState(() {
-                    _selectedCollege = null;
-                    _selectedBranch = null;
-                    _selectedSemester = null;
-                    _selectedSubject = null;
-                    _selectedExamType = null;
-                  });
-                  _onFiltersChanged();
-                },
-                tooltip: 'Reset Filters',
+              padding: const EdgeInsets.only(right: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 22,
+                    color: Colors.grey.shade700,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _selectedCollege = null;
+                      _selectedBranch = null;
+                      _selectedSemester = null;
+                      _selectedSubject = null;
+                      _selectedExamType = null;
+                    });
+                    _onFiltersChanged();
+                  },
+                  tooltip: 'Reset Filters',
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.06),
-                  Colors.white,
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.grey.shade50],
           ),
-          SafeArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 20,
-                      ),
-                      child: FilterCard(
-                        selectedCollege: _selectedCollege,
-                        selectedBranch: _selectedBranch,
-                        selectedSemester: _selectedSemester,
-                        selectedSubject: _selectedSubject,
-                        selectedExamType: _selectedExamType,
-                        onCollegeChanged: (value) {
-                          setState(() {
-                            _selectedCollege = value;
-                            _selectedBranch = null;
-                            _selectedSemester = null;
-                            _selectedSubject = null;
-                          });
-                        },
-                        onBranchChanged: (value) {
-                          setState(() {
-                            _selectedBranch = value;
-                            _selectedSemester = null;
-                            _selectedSubject = null;
-                          });
-                        },
-                        onSemesterChanged: (value) {
-                          setState(() {
-                            _selectedSemester = value;
-                            _selectedSubject = null;
-                          });
-                        },
-                        onSubjectChanged: (value) {
-                          setState(() {
-                            _selectedSubject = value;
-                          });
-                        },
-                        onExamTypeChanged: (value) {
-                          setState(() {
-                            _selectedExamType = value;
-                          });
-                        },
-                        onSearch: _onFiltersChanged,
-                      ),
+        ),
+        child: SafeArea(
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                    child: FilterCard(
+                      selectedCollege: _selectedCollege,
+                      selectedBranch: _selectedBranch,
+                      selectedSemester: _selectedSemester,
+                      selectedSubject: _selectedSubject,
+                      selectedExamType: _selectedExamType,
+                      onCollegeChanged: (value) {
+                        setState(() {
+                          _selectedCollege = value;
+                          _selectedBranch = null;
+                          _selectedSemester = null;
+                          _selectedSubject = null;
+                        });
+                      },
+                      onBranchChanged: (value) {
+                        setState(() {
+                          _selectedBranch = value;
+                          _selectedSemester = null;
+                          _selectedSubject = null;
+                        });
+                      },
+                      onSemesterChanged: (value) {
+                        setState(() {
+                          _selectedSemester = value;
+                          _selectedSubject = null;
+                        });
+                      },
+                      onSubjectChanged: (value) {
+                        setState(() {
+                          _selectedSubject = value;
+                        });
+                      },
+                      onExamTypeChanged: (value) {
+                        setState(() {
+                          _selectedExamType = value;
+                        });
+                      },
+                      onSearch: _onFiltersChanged,
                     ),
                   ),
                 ),
-                if (_papers.isNotEmpty) ...[
+              ),
+              if (_papers.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Results',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${_papers.length}',
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final paper = _papers[index];
+                      return PaperCard(paper: paper, index: index);
+                    }, childCount: _papers.length),
+                  ),
+                ),
+                if (_isLoadingMore)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Results',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${_papers.length}',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ],
+                      padding: const EdgeInsets.all(20.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.blue.shade600,
+                          strokeWidth: 2.5,
+                        ),
                       ),
                     ),
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final paper = _papers[index];
-                        return PaperCard(paper: paper, index: index);
-                      }, childCount: _papers.length),
+              ] else if (_isLoadingMore)
+                SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.blue.shade600,
+                      strokeWidth: 2.5,
                     ),
                   ),
-                  if (_isLoadingMore)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    ),
-                ] else if (_isLoadingMore)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
+                )
+              else
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
                             Icons.search_rounded,
-                            size: 80,
-                            color: Colors.grey.shade300,
+                            size: 64,
+                            color: Colors.grey.shade400,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No papers found',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade600,
-                                ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'No papers found',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                            letterSpacing: -0.3,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Try different filter combinations',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.grey.shade500),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try different filter combinations',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                            letterSpacing: 0.2,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
