@@ -1,6 +1,5 @@
 // lib/screens/topics_search_page.dart
 import 'dart:async';
-import 'dart:ui';
 import 'package:exam_ready/data/dropdown_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,17 +33,19 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
   void initState() {
     super.initState();
     _headerController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    )..forward();
-
-    _filterPanelController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     )..forward();
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, -0.5), end: Offset.zero).animate(
+    _filterPanelController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    )..forward();
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.3),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(
         parent: _filterPanelController,
         curve: Curves.easeOut,
@@ -82,12 +83,10 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
     });
 
     try {
-      // Create document name pattern: college_branch_semester_subject_examType
       String documentPattern = '${_selectedCollege}_${_selectedBranch}_${_selectedSemester}_${_selectedSubject}_${_selectedExamType}'
           .replaceAll(' ', '_')
           .toLowerCase();
 
-      // Fetch from questions collection
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('questions')
           .get();
@@ -96,16 +95,15 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
 
       for (var doc in querySnapshot.docs) {
         String docId = doc.id;
-        
-        // Check if document matches the pattern
+
         if (docId.toLowerCase().contains(documentPattern.toLowerCase())) {
           Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          
-          // Extract topics with their counts
+
           List<Map<String, dynamic>> topics = [];
           data.forEach((key, value) {
-            // Skip metadata fields
-            if (key != 'createdAt' && key != 'lastModified' && key != 'updatedAt') {
+            if (key != 'createdAt' &&
+                key != 'lastModified' &&
+                key != 'updatedAt') {
               topics.add({
                 'name': key,
                 'count': value is int ? value : 0,
@@ -113,8 +111,8 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
             }
           });
 
-          // Sort topics by count in descending order
-          topics.sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+          topics.sort((a, b) =>
+              (b['count'] as int).compareTo(a['count'] as int));
 
           papers.add({
             'documentId': docId,
@@ -127,7 +125,7 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
         _questionPapers = papers;
         _isLoading = false;
         _showResults = true;
-        
+
         if (papers.isEmpty) {
           _errorMessage = 'No question papers found for the selected filters';
         }
@@ -172,18 +170,19 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: FadeTransition(
           opacity: _headerController,
-          child: const Text(
-            'Search Important Topics',
+          child: Text(
+            'Important Topics',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              fontSize: 22,
               letterSpacing: -0.5,
+              color: Colors.grey.shade800,
             ),
           ),
         ),
@@ -191,107 +190,111 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
           ScaleTransition(
             scale: _headerController,
             child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 24),
-                onPressed: _resetFilters,
-                tooltip: 'Reset Filters',
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.06),
-                  Colors.white,
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    SlideTransition(
-                      position: _slideAnimation,
-                      child: TopicsFilterCard(
-                        selectedCollege: _selectedCollege,
-                        selectedBranch: _selectedBranch,
-                        selectedSemester: _selectedSemester,
-                        selectedSubject: _selectedSubject,
-                        selectedExamType: _selectedExamType,
-                        onCollegeChanged: (value) {
-                          setState(() {
-                            _selectedCollege = value;
-                            _selectedBranch = null;
-                            _selectedSemester = null;
-                            _selectedSubject = null;
-                            _errorMessage = null;
-                            _showResults = false;
-                          });
-                        },
-                        onBranchChanged: (value) {
-                          setState(() {
-                            _selectedBranch = value;
-                            _selectedSemester = null;
-                            _selectedSubject = null;
-                            _errorMessage = null;
-                            _showResults = false;
-                          });
-                        },
-                        onSemesterChanged: (value) {
-                          setState(() {
-                            _selectedSemester = value;
-                            _selectedSubject = null;
-                            _errorMessage = null;
-                            _showResults = false;
-                          });
-                        },
-                        onSubjectChanged: (value) {
-                          setState(() {
-                            _selectedSubject = value;
-                            _errorMessage = null;
-                            _showResults = false;
-                          });
-                        },
-                        onExamTypeChanged: (value) {
-                          setState(() {
-                            _selectedExamType = value;
-                            _errorMessage = null;
-                            _showResults = false;
-                          });
-                        },
-                        onSearch: _searchTopics,
-                        canSearch: _canSearch,
-                        isLoading: _isLoading,
-                        errorMessage: _errorMessage,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    if (_showResults && _questionPapers.isNotEmpty)
-                      _buildResultsSection(context)
-                    else if (!_showResults)
-                      _buildInfoSection(context),
-                  ],
+              padding: const EdgeInsets.only(right: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 22,
+                    color: Colors.grey.shade700,
+                  ),
+                  onPressed: _resetFilters,
+                  tooltip: 'Reset Filters',
                 ),
               ),
             ),
           ),
         ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: TopicsFilterCard(
+                      selectedCollege: _selectedCollege,
+                      selectedBranch: _selectedBranch,
+                      selectedSemester: _selectedSemester,
+                      selectedSubject: _selectedSubject,
+                      selectedExamType: _selectedExamType,
+                      onCollegeChanged: (value) {
+                        setState(() {
+                          _selectedCollege = value;
+                          _selectedBranch = null;
+                          _selectedSemester = null;
+                          _selectedSubject = null;
+                          _errorMessage = null;
+                          _showResults = false;
+                        });
+                      },
+                      onBranchChanged: (value) {
+                        setState(() {
+                          _selectedBranch = value;
+                          _selectedSemester = null;
+                          _selectedSubject = null;
+                          _errorMessage = null;
+                          _showResults = false;
+                        });
+                      },
+                      onSemesterChanged: (value) {
+                        setState(() {
+                          _selectedSemester = value;
+                          _selectedSubject = null;
+                          _errorMessage = null;
+                          _showResults = false;
+                        });
+                      },
+                      onSubjectChanged: (value) {
+                        setState(() {
+                          _selectedSubject = value;
+                          _errorMessage = null;
+                          _showResults = false;
+                        });
+                      },
+                      onExamTypeChanged: (value) {
+                        setState(() {
+                          _selectedExamType = value;
+                          _errorMessage = null;
+                          _showResults = false;
+                        });
+                      },
+                      onSearch: _searchTopics,
+                      canSearch: _canSearch,
+                      isLoading: _isLoading,
+                      errorMessage: _errorMessage,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (_showResults && _questionPapers.isNotEmpty)
+                    _buildResultsSection(context)
+                  else if (!_showResults)
+                    _buildInfoSection(context),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -301,162 +304,172 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-              ],
-            ),
+            color: Colors.blue.shade50,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.library_books_rounded,
-                color: Theme.of(context).colorScheme.primary,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.library_books_rounded,
+                  color: Colors.blue.shade700,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
-              Text(
-                'Found ${_questionPapers.length} Question Paper${_questionPapers.length > 1 ? 's' : ''}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+              Expanded(
+                child: Text(
+                  'Found ${_questionPapers.length} Paper${_questionPapers.length > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        ..._questionPapers.map((paper) => _buildQuestionPaperCard(context, paper)),
+        ..._questionPapers.map(
+          (paper) => _buildQuestionPaperCard(context, paper),
+        ),
       ],
     );
   }
 
-  Widget _buildQuestionPaperCard(BuildContext context, Map<String, dynamic> paper) {
+  Widget _buildQuestionPaperCard(
+      BuildContext context, Map<String, dynamic> paper) {
     List<Map<String, dynamic>> topics = paper['topics'];
     String documentId = paper['documentId'];
-    
-    // Get top topics based on exam type
-    int topicsToShow = _selectedExamType?.toLowerCase().contains('mid') == true ? 10 : 20;
-    List<Map<String, dynamic>> topTopics = topics.take(topicsToShow).toList();
+
+    int topicsToShow = _selectedExamType?.toLowerCase().contains('mid') == true
+        ? 10
+        : 20;
+    List<Map<String, dynamic>> topTopics =
+        topics.take(topicsToShow).toList();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Colors.grey.shade50,
-          ],
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+          ),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.all(20),
+            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
               ),
-              borderRadius: BorderRadius.circular(12),
+              child: Icon(
+                Icons.description_rounded,
+                color: Colors.blue.shade600,
+                size: 22,
+              ),
             ),
-            child: const Icon(
-              Icons.description_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          title: Text(
-            documentId.replaceAll('_', ' ').toUpperCase(),
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              '${topics.length} topics • Top $topicsToShow shown',
+            title: Text(
+              documentId.replaceAll('_', ' ').toUpperCase(),
               style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.grey.shade800,
+                letterSpacing: 0.2,
               ),
             ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                '${topics.length} topics • Top $topicsToShow shown',
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 12,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            children: [
+              Divider(color: Colors.grey.shade200, height: 1),
+              const SizedBox(height: 16),
+              ...topTopics.asMap().entries.map((entry) {
+                int index = entry.key;
+                Map<String, dynamic> topic = entry.value;
+                return _buildTopicItem(
+                  context,
+                  index + 1,
+                  topic['name'],
+                  topic['count'],
+                );
+              }),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _navigateToDetails(documentId),
+                  icon: const Icon(Icons.analytics_rounded, size: 20),
+                  label: const Text(
+                    'View Detailed Analysis',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    backgroundColor: Colors.blue.shade600,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
           ),
-          children: [
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            ...topTopics.asMap().entries.map((entry) {
-              int index = entry.key;
-              Map<String, dynamic> topic = entry.value;
-              return _buildTopicItem(
-                context,
-                index + 1,
-                topic['name'],
-                topic['count'],
-              );
-            }),
-            const SizedBox(height: 16),
-            // View Details Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _navigateToDetails(documentId),
-                icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                label: const Text(
-                  'View Detailed Analysis',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildTopicItem(BuildContext context, int rank, String topicName, int count) {
-    MaterialColor rankColor;
+  Widget _buildTopicItem(
+      BuildContext context, int rank, String topicName, int count) {
+    Color rankColor;
     if (rank <= 3) {
-      rankColor = Colors.amber;
+      rankColor = Colors.amber.shade600;
     } else if (rank <= 5) {
-      rankColor = Colors.orange;
+      rankColor = Colors.orange.shade600;
     } else {
-      rankColor = Colors.grey;
+      rankColor = Colors.grey.shade600;
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
@@ -471,15 +484,15 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: rankColor.withOpacity(0.2),
+              color: rankColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: Text(
                 '$rank',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: rankColor.shade900,
+                  fontWeight: FontWeight.w700,
+                  color: rankColor,
                   fontSize: 14,
                 ),
               ),
@@ -489,21 +502,18 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
           Expanded(
             child: Text(
               topicName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: Colors.grey.shade800,
+                letterSpacing: 0.2,
               ),
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                ],
-              ),
+              color: Colors.blue.shade50,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -511,16 +521,17 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
               children: [
                 Icon(
                   Icons.trending_up_rounded,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
+                  size: 14,
+                  color: Colors.blue.shade600,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '$count',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Colors.blue.shade700,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
@@ -533,20 +544,13 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
 
   Widget _buildInfoSection(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.blue.shade50,
-            Colors.purple.shade50,
-          ],
-        ),
+        color: Colors.blue.shade50.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.blue.withOpacity(0.2),
-          width: 1.5,
+          color: Colors.blue.shade100,
+          width: 1,
         ),
       ),
       child: Column(
@@ -554,69 +558,92 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
         children: [
           Row(
             children: [
-              Icon(
-                Icons.info_outline_rounded,
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  color: Colors.blue.shade700,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
                 'How it works',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                  letterSpacing: -0.3,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildInfoPoint(
-            '📊 Mid Exams',
+            '📊',
+            'Mid Exams',
             'View top 10 most frequently asked topics',
-            context,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildInfoPoint(
-            '📚 Semester Exams',
+            '📚',
+            'Semester Exams',
             'View top 20 most frequently asked topics',
-            context,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildInfoPoint(
-            '🔥 Higher Count',
+            '🔥',
+            'Higher Count',
             'Topics with higher count are asked more frequently',
-            context,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildInfoPoint(
-            '📈 Detailed View',
+            '📈',
+            'Detailed View',
             'Tap "View Detailed Analysis" for comprehensive statistics',
-            context,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoPoint(String title, String description, BuildContext context) {
+  Widget _buildInfoPoint(String emoji, String title, String description) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          emoji,
+          style: const TextStyle(fontSize: 20),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade700,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -666,143 +693,137 @@ class TopicsFilterCard extends StatelessWidget {
 
     final List<String> subjects;
     if (selectedBranch != null && selectedSemester != null) {
-      subjects = subjectData[selectedBranch!]?[selectedSemester!] ?? <String>[];
+      subjects =
+          subjectData[selectedBranch!]?[selectedSemester!] ?? <String>[];
     } else {
       subjects = <String>[];
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.4),
-                Colors.white.withOpacity(0.15),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.auto_graph_rounded,
+                    color: Colors.blue.shade600,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Find Important Topics',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
               ],
             ),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.5),
-              width: 1.5,
+            const SizedBox(height: 20),
+            ModernDropdown(
+              label: 'College',
+              icon: Icons.school_rounded,
+              value: selectedCollege,
+              items: collegeData.keys.toList(),
+              onChanged: onCollegeChanged,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 30,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Branch',
+              icon: Icons.account_tree_rounded,
+              value: selectedBranch,
+              items: branches,
+              onChanged: onBranchChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Semester',
+              icon: Icons.calendar_today_rounded,
+              value: selectedSemester,
+              items: semesters,
+              onChanged: onSemesterChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Subject',
+              icon: Icons.book_rounded,
+              value: selectedSubject,
+              items: subjects,
+              onChanged: onSubjectChanged,
+            ),
+            const SizedBox(height: 12),
+            ModernDropdown(
+              label: 'Exam Type',
+              icon: Icons.assignment_rounded,
+              value: selectedExamType,
+              items: examTypes,
+              onChanged: onExamTypeChanged,
+            ),
+            if (errorMessage != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.red.shade200,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
                   children: [
                     Icon(
-                      Icons.auto_graph_rounded,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
+                      Icons.error_outline_rounded,
+                      color: Colors.red.shade700,
+                      size: 20,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Find Important Topics',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        errorMessage!,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                ModernDropdown(
-                  label: 'College',
-                  icon: Icons.school_rounded,
-                  value: selectedCollege,
-                  items: collegeData.keys.toList(),
-                  onChanged: onCollegeChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Branch',
-                  icon: Icons.account_tree_rounded,
-                  value: selectedBranch,
-                  items: branches,
-                  onChanged: onBranchChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Semester',
-                  icon: Icons.calendar_today_rounded,
-                  value: selectedSemester,
-                  items: semesters,
-                  onChanged: onSemesterChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Subject',
-                  icon: Icons.book_rounded,
-                  value: selectedSubject,
-                  items: subjects,
-                  onChanged: onSubjectChanged,
-                ),
-                const SizedBox(height: 16),
-                ModernDropdown(
-                  label: 'Exam Type',
-                  icon: Icons.assignment_rounded,
-                  value: selectedExamType,
-                  items: examTypes,
-                  onChanged: onExamTypeChanged,
-                ),
-                if (errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.red.shade200,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline_rounded,
-                          color: Colors.red.shade700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            errorMessage!,
-                            style: TextStyle(
-                              color: Colors.red.shade700,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                SearchTopicsButton(
-                  isLoading: isLoading,
-                  enabled: canSearch,
-                  onPressed: onSearch,
-                ),
-              ],
+              ),
+            ],
+            const SizedBox(height: 20),
+            SearchTopicsButton(
+              isLoading: isLoading,
+              enabled: canSearch,
+              onPressed: onSearch,
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -829,39 +850,46 @@ class ModernDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.5),
-            Colors.white.withOpacity(0.2),
-          ],
-        ),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+          color: Colors.grey.shade200,
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: DropdownButtonFormField<String>(
         value: value,
         items: items
-            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .map((item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ))
             .toList(),
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon),
+          labelStyle: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: Colors.grey.shade600,
+            size: 20,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 14,
+            horizontal: 16,
+            vertical: 16,
           ),
           floatingLabelBehavior: FloatingLabelBehavior.never,
         ),
@@ -870,7 +898,8 @@ class ModernDropdown extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         icon: Icon(
           Icons.expand_more_rounded,
-          color: Theme.of(context).colorScheme.primary,
+          color: Colors.grey.shade600,
+          size: 22,
         ),
       ),
     );
@@ -894,16 +923,14 @@ class SearchTopicsButton extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: double.infinity,
-      height: 56,
+      height: 54,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         gradient: enabled
             ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
                 colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
+                  Colors.blue.shade600,
+                  Colors.blue.shade700,
                 ],
               )
             : LinearGradient(
@@ -915,9 +942,9 @@ class SearchTopicsButton extends StatelessWidget {
         boxShadow: enabled
             ? [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.blue.shade200.withOpacity(0.5),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ]
             : [],
@@ -925,13 +952,13 @@ class SearchTopicsButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: enabled && !isLoading ? onPressed : null,
           child: Center(
             child: isLoading
                 ? const SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: 22,
+                    height: 22,
                     child: CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2.5,
@@ -948,12 +975,14 @@ class SearchTopicsButton extends StatelessWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 10),
-                      Text(
+                      const Text(
                         'View Important Topics',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ],
                   ),
