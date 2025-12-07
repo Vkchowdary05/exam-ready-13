@@ -16,42 +16,42 @@ class EntryScreen extends StatefulWidget {
 
 class _EntryScreenState extends State<EntryScreen> {
   final List<Map<String, dynamic>> stats = [
-    {'icon': Icons.school, 'number': '250+', 'label': 'Colleges'},
-    {'icon': Icons.people, 'number': '50K+', 'label': 'Active Users'},
-    {'icon': Icons.description, 'number': '10K+', 'label': 'Exam Papers'},
-    {'icon': Icons.category, 'number': '85+', 'label': 'Departments'},
+    {'icon': Icons.school_outlined, 'number': '250+', 'label': 'Colleges'},
+    {'icon': Icons.people_outline, 'number': '50K+', 'label': 'Active Users'},
+    {'icon': Icons.description_outlined, 'number': '10K+', 'label': 'Exam Papers'},
+    {'icon': Icons.category_outlined, 'number': '85+', 'label': 'Departments'},
   ];
 
   final List<Map<String, dynamic>> popularColleges = [
     {
       'name': 'IIT Hyderabad',
       'description': 'Premier Engineering Institute',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFF6366F1),
+      'icon': Icons.account_balance_outlined,
+      'color': const Color(0xFF5A67D8),
     },
     {
       'name': 'JNTU',
       'description': 'Jawaharlal Nehru Technological University',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFF8B5CF6),
+      'icon': Icons.account_balance_outlined,
+      'color': const Color(0xFF7C3AED),
     },
     {
       'name': 'CBIT',
       'description': 'Chaitanya Bharathi Institute of Technology',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFF06B6D4),
+      'icon': Icons.account_balance_outlined,
+      'color': const Color(0xFF4299E1),
     },
     {
       'name': 'VNR VJIET',
       'description': 'Vallurupalli Nageswara Rao Vignana Jyothi',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFFEC4899),
+      'icon': Icons.account_balance_outlined,
+      'color': const Color(0xFF667EEA),
     },
     {
       'name': 'MGIT',
       'description': 'Mahatma Gandhi Institute of Technology',
-      'icon': Icons.account_balance,
-      'color': const Color(0xFF3B82F6),
+      'icon': Icons.account_balance_outlined,
+      'color': const Color(0xFF6366F1),
     },
   ];
 
@@ -59,76 +59,66 @@ class _EntryScreenState extends State<EntryScreen> {
     {
       'name': 'Computer Science',
       'description': 'CSE & IT Programs',
-      'icon': Icons.computer,
-      'color': const Color(0xFF6366F1),
+      'icon': Icons.computer_outlined,
+      'color': const Color(0xFF5A67D8),
     },
     {
       'name': 'Electronics',
       'description': 'ECE & EEE Programs',
-      'icon': Icons.memory,
-      'color': const Color(0xFF8B5CF6),
+      'icon': Icons.memory_outlined,
+      'color': const Color(0xFF7C3AED),
     },
     {
       'name': 'Mechanical',
       'description': 'Mechanical Engineering',
-      'icon': Icons.settings,
-      'color': const Color(0xFF06B6D4),
+      'icon': Icons.settings_outlined,
+      'color': const Color(0xFF4299E1),
     },
     {
       'name': 'Civil Engineering',
       'description': 'Construction & Infrastructure',
-      'icon': Icons.domain,
-      'color': const Color(0xFFEC4899),
+      'icon': Icons.domain_outlined,
+      'color': const Color(0xFF667EEA),
     },
     {
       'name': 'AI & Data Science',
       'description': 'Artificial Intelligence & ML',
-      'icon': Icons.psychology,
-      'color': const Color(0xFF3B82F6),
+      'icon': Icons.psychology_outlined,
+      'color': const Color(0xFF6366F1),
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.backgroundColor,
-              const Color(0xFF1A1A2E),
-              AppTheme.backgroundColor,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildAuthButtons(),
-                  const SizedBox(height: 30),
-                  _buildStatsSection(),
-                  const SizedBox(height: 40),
-                  _buildPopularSection(
-                    'Popular Colleges',
-                    popularColleges,
-                  ),
-                  const SizedBox(height: 30),
-                  _buildPopularSection(
-                    'Popular Departments',
-                    popularDepartments,
-                  ),
-                  const SizedBox(height: 30),
-                ],
-              ),
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 24),
+                _buildAuthButtons(),
+                const SizedBox(height: 32),
+                _buildSectionTitle('Platform Overview'),
+                const SizedBox(height: 16),
+                _buildStatsSection(),
+                const SizedBox(height: 32),
+                _buildPopularSection(
+                  'Popular Colleges',
+                  popularColleges,
+                ),
+                const SizedBox(height: 32),
+                _buildPopularSection(
+                  'Popular Departments',
+                  popularDepartments,
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
         ),
@@ -141,12 +131,12 @@ class _EntryScreenState extends State<EntryScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6366F1).withAlpha(77),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: AppTheme.accentColor.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -155,12 +145,12 @@ class _EntryScreenState extends State<EntryScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(51),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.school,
-              size: 32,
+              Icons.school_outlined,
+              size: 28,
               color: Colors.white,
             ),
           ),
@@ -171,12 +161,18 @@ class _EntryScreenState extends State<EntryScreen> {
               children: [
                 Text(
                   'Exam Ready',
-                  style: AppTheme.headingStyle.copyWith(fontSize: 28),
+                  style: AppTheme.headingStyle.copyWith(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Your Ultimate Exam Companion',
-                  style: AppTheme.subheadingStyle.copyWith(fontSize: 14),
+                  style: AppTheme.subheadingStyle.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -185,8 +181,8 @@ class _EntryScreenState extends State<EntryScreen> {
       ),
     )
         .animate()
-        .fadeIn(duration: 600.ms)
-        .slideY(begin: -0.3, end: 0, duration: 600.ms, curve: Curves.easeOut);
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: -0.2, end: 0, duration: 500.ms, curve: Curves.easeOut);
   }
 
   Widget _buildAuthButtons() {
@@ -195,99 +191,119 @@ class _EntryScreenState extends State<EntryScreen> {
         Expanded(
           child: _buildLoginButton(),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildSignUpButton(),
         ),
       ],
     )
         .animate()
-        .fadeIn(duration: 600.ms, delay: 200.ms)
-        .slideY(begin: 0.2, end: 0, duration: 600.ms, delay: 200.ms);
+        .fadeIn(duration: 500.ms, delay: 150.ms)
+        .slideY(begin: 0.15, end: 0, duration: 500.ms, delay: 150.ms);
   }
 
   Widget _buildLoginButton() {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginScreen()));
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentColor.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF6366F1).withAlpha(102),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.login_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Login',
+                  style: AppTheme.buttonTextStyle,
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.login,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Login',
-              style: AppTheme.cardTitleStyle.copyWith(fontSize: 16),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSignUpButton() {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignupScreen()));
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const SignupScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.borderColor,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF06B6D4).withAlpha(102),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.person_add,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Sign Up',
-              style: AppTheme.cardTitleStyle.copyWith(fontSize: 16),
-            ),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_add_outlined,
+                color: AppTheme.textPrimary,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Sign Up',
+                style: AppTheme.buttonTextStyle.copyWith(
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: AppTheme.headingStyle.copyWith(fontSize: 20),
+    )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideX(begin: -0.1, end: 0, duration: 400.ms);
   }
 
   Widget _buildStatsSection() {
@@ -296,9 +312,9 @@ class _EntryScreenState extends State<EntryScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.4,
       ),
       itemCount: stats.length,
       itemBuilder: (context, index) {
@@ -318,11 +334,11 @@ class _EntryScreenState extends State<EntryScreen> {
       children: [
         Text(
           title,
-          style: AppTheme.headingStyle.copyWith(fontSize: 24),
+          style: AppTheme.headingStyle.copyWith(fontSize: 20),
         )
             .animate()
-            .fadeIn(duration: 600.ms)
-            .slideX(begin: -0.2, end: 0, duration: 600.ms),
+            .fadeIn(duration: 400.ms)
+            .slideX(begin: -0.1, end: 0, duration: 400.ms),
         const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
@@ -340,10 +356,11 @@ class _EntryScreenState extends State<EntryScreen> {
                   SnackBar(
                     content: Text('Opening ${items[index]['name']}...'),
                     behavior: SnackBarBehavior.floating,
-                    backgroundColor: items[index]['color'],
+                    backgroundColor: AppTheme.textPrimary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    margin: const EdgeInsets.all(16),
                   ),
                 );
               },
