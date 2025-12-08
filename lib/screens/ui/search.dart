@@ -454,87 +454,99 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Share Paper',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  paper.subject,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                    letterSpacing: 0.2,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.2,
+        maxChildSize: 0.6,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Share Paper',
                   textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildShareOption(
-                      icon: Icons.link_rounded,
-                      label: 'Copy Link',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showSnackBar('Link copied!', isSuccess: true);
-                      },
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    paper.subject,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                      letterSpacing: 0.2,
                     ),
-                    _buildShareOption(
-                      icon: Icons.message_rounded,
-                      label: 'Message',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showSnackBar('Share via message', isSuccess: true);
-                      },
-                    ),
-                    _buildShareOption(
-                      icon: Icons.more_horiz_rounded,
-                      label: 'More',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showSnackBar('More options', isSuccess: true);
-                      },
-                    ),
-                  ],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
+                const SizedBox(height: 32),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 24,
+                    runSpacing: 24,
+                    children: [
+                      _buildShareOption(
+                        icon: Icons.link_rounded,
+                        label: 'Copy Link',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showSnackBar('Link copied!', isSuccess: true);
+                        },
+                      ),
+                      _buildShareOption(
+                        icon: Icons.message_rounded,
+                        label: 'Message',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showSnackBar('Share via message', isSuccess: true);
+                        },
+                      ),
+                      _buildShareOption(
+                        icon: Icons.more_horiz_rounded,
+                        label: 'More',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showSnackBar('More options', isSuccess: true);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

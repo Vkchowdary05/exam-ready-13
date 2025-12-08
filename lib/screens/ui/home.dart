@@ -284,6 +284,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildStatsGrid() {
+    final List<_StatCardData> stats = [
+      _StatCardData(
+          title: 'Colleges',
+          icon: Icons.school_outlined,
+          collection: 'colleges',
+          color: primaryColor,
+          delay: 0),
+      _StatCardData(
+          title: 'Exam Papers',
+          icon: Icons.description_outlined,
+          collection: 'question_papers',
+          color: accentPurple,
+          delay: 100),
+      _StatCardData(
+          title: 'Branches',
+          icon: Icons.account_tree_outlined,
+          collection: 'branches',
+          color: accentBlue,
+          delay: 200),
+      _StatCardData(
+          title: 'Active Users',
+          icon: Icons.people_outline_rounded,
+          collection: 'users',
+          color: accentTeal,
+          delay: 300),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount;
@@ -295,43 +322,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           crossAxisCount = 4;
         }
 
-        return GridView.count(
-          crossAxisCount: crossAxisCount,
+        return GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: constraints.maxWidth < 600 ? 1.4 : 1.3,
+          ),
+          itemCount: stats.length,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: constraints.maxWidth < 600 ? 1.4 : 1.3,
-          children: const [
-            _StatCardFromFirestore(
-              title: 'Colleges',
-              icon: Icons.school_outlined,
-              collection: 'colleges',
-              color: primaryColor,
-              delay: 0,
-            ),
-            _StatCardFromFirestore(
-              title: 'Exam Papers',
-              icon: Icons.description_outlined,
-              collection: 'question_papers',
-              color: accentPurple,
-              delay: 100,
-            ),
-            _StatCardFromFirestore(
-              title: 'Branches',
-              icon: Icons.account_tree_outlined,
-              collection: 'branches',
-              color: accentBlue,
-              delay: 200,
-            ),
-            _StatCardFromFirestore(
-              title: 'Active Users',
-              icon: Icons.people_outline_rounded,
-              collection: 'users',
-              color: accentTeal,
-              delay: 300,
-            ),
-          ],
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            return _StatCardFromFirestore(
+              title: stat.title,
+              icon: stat.icon,
+              collection: stat.collection,
+              color: stat.color,
+              delay: stat.delay,
+            );
+          },
         );
       },
     );
@@ -631,49 +641,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: borderColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Notifications',
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-                letterSpacing: -0.5,
-              ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Notifications',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildNotificationItem(
+                  'New papers available',
+                  '5 new papers in your subjects',
+                  Icons.description_outlined,
+                  primaryColor,
+                ),
+                _buildNotificationItem(
+                  'System update',
+                  'New features added',
+                  Icons.update_outlined,
+                  accentBlue,
+                ),
+                _buildNotificationItem(
+                  'Maintenance scheduled',
+                  'Brief downtime on Sunday',
+                  Icons.construction_outlined,
+                  accentPurple,
+                ),
+                _buildNotificationItem(
+                  'Your paper was viewed',
+                  'Someone viewed your uploaded paper',
+                  Icons.visibility_outlined,
+                  accentTeal,
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 24),
-            _buildNotificationItem(
-              'New papers available',
-              '5 new papers in your subjects',
-              Icons.description_outlined,
-              primaryColor,
-            ),
-            _buildNotificationItem(
-              'System update',
-              'New features added',
-              Icons.update_outlined,
-              accentBlue,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -745,61 +779,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: borderColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Settings',
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-                letterSpacing: -0.5,
-              ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(24),
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Settings',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildSettingItem(
+                  'Profile',
+                  Icons.person_outline_rounded,
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
+                    );
+                  },
+                ),
+                _buildSettingItem(
+                  'Dark Mode',
+                  Icons.dark_mode_outlined,
+                  () {},
+                  trailing: Switch(
+                    value: false,
+                    onChanged: (val) {},
+                    activeColor: primaryColor,
+                  ),
+                ),
+                _buildSettingItem('Language', Icons.language_outlined, () {}),
+                _buildSettingItem(
+                    'Notifications', Icons.notifications_none_rounded, () {}),
+                _buildSettingItem('Privacy', Icons.privacy_tip_outlined, () {}),
+                _buildSettingItem(
+                    'About', Icons.info_outline_rounded, () {}),
+                _buildSettingItem('Help & Feedback', Icons.help_outline_rounded, () {}),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 24),
-            _buildSettingItem(
-              'Profile',
-              Icons.person_outline_rounded,
-              () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              },
-            ),
-            _buildSettingItem(
-              'Dark Mode',
-              Icons.dark_mode_outlined,
-              () {},
-              trailing: Switch(
-                value: false,
-                onChanged: (val) {},
-                activeColor: primaryColor,
-              ),
-            ),
-            _buildSettingItem(
-              'Language',
-              Icons.language_outlined,
-              () {},
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -849,6 +898,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
     );
   }
+}
+
+class _StatCardData {
+  final String title;
+  final IconData icon;
+  final String collection;
+  final Color color;
+  final int delay;
+
+  _StatCardData({
+    required this.title,
+    required this.icon,
+    required this.collection,
+    required this.color,
+    required this.delay,
+  });
 }
 
 class _StatCardFromFirestore extends StatefulWidget {

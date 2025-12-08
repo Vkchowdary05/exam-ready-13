@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import 'package:exam_ready/screens/ui/submitted_papers.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -16,7 +17,8 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _collegeController = TextEditingController();
   final _nameController = TextEditingController();
@@ -31,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   Map<String, dynamic>? _userData;
   File? _newImageFile;
   String? _newPhotoUrl;
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -46,7 +48,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   static const Color errorColor = Color(0xFFEF4444);
 
   String get cloudinaryCloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
-  String get cloudinaryUploadPreset => dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
+  String get cloudinaryUploadPreset =>
+      dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
 
   @override
   void initState() {
@@ -65,18 +68,19 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
   }
 
   Future<void> _loadUserProfile() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      
+
       if (user == null) {
         if (mounted) {
           Navigator.of(context).pushReplacementNamed('/login');
@@ -99,7 +103,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       }
 
       _userData = docSnapshot.data();
-      
+
       _collegeController.text = _userData?['college'] ?? '';
       _nameController.text = _userData?['name'] ?? '';
       _branchController.text = _userData?['branch'] ?? '';
@@ -146,70 +150,90 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: borderColor,
-                  borderRadius: BorderRadius.circular(2),
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.2,
+        maxChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Change Photo',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                  letterSpacing: -0.5,
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Change Photo',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildImageOption(
-                Icons.photo_library_outlined,
-                'Choose from Gallery',
-                () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              _buildImageOption(
-                Icons.camera_alt_outlined,
-                'Take a Photo',
-                () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              if (_userData?['photoUrl'] != null && _userData!['photoUrl'].isNotEmpty)
+                const SizedBox(height: 20),
                 _buildImageOption(
-                  Icons.delete_outline_rounded,
-                  'Remove Photo',
+                  Icons.photo_library_outlined,
+                  'Choose from Gallery',
                   () {
                     Navigator.pop(context);
-                    _confirmRemovePhoto();
+                    _pickImage(ImageSource.gallery);
                   },
-                  isDestructive: true,
                 ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
+                _buildImageOption(
+                  Icons.camera_alt_outlined,
+                  'Take a Photo',
+                  () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                if (_userData?['photoUrl'] != null &&
+                    _userData!['photoUrl'].isNotEmpty)
+                  _buildImageOption(
+                    Icons.delete_outline_rounded,
+                    'Remove Photo',
+                    () {
+                      Navigator.pop(context);
+                      _confirmRemovePhoto();
+                    },
+                    isDestructive: true,
+                  ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildImageOption(IconData icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildImageOption(
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -225,14 +249,14 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDestructive 
-                    ? errorColor.withOpacity(0.08) 
+                color: isDestructive
+                    ? errorColor.withOpacity(0.08)
                     : primaryColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                icon, 
-                color: isDestructive ? errorColor : primaryColor, 
+                icon,
+                color: isDestructive ? errorColor : primaryColor,
                 size: 22,
               ),
             ),
@@ -268,10 +292,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         ),
         content: Text(
           'Are you sure you want to remove your profile photo?',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: textSecondary,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, color: textSecondary),
         ),
         actions: [
           TextButton(
@@ -322,7 +343,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       final request = http.MultipartRequest('POST', url);
       request.fields['upload_preset'] = cloudinaryUploadPreset;
       request.fields['folder'] = 'user_profiles';
-      
+
       request.files.add(
         await http.MultipartFile.fromPath('file', imageFile.path),
       );
@@ -423,7 +444,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         content: Row(
           children: [
             Icon(
-              isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -464,7 +487,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
   Widget _buildProfilePhoto() {
     String? photoUrl = _userData?['photoUrl'];
-    
+
     if (_newPhotoUrl == '') {
       photoUrl = null;
     }
@@ -492,10 +515,16 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 backgroundImage: _newImageFile != null
                     ? FileImage(_newImageFile!)
                     : (photoUrl != null && photoUrl.isNotEmpty)
-                        ? CachedNetworkImageProvider(photoUrl)
-                        : null,
-                child: (_newImageFile == null && (photoUrl == null || photoUrl.isEmpty))
-                    ? Icon(Icons.person_outline_rounded, size: 64, color: textSecondary)
+                    ? CachedNetworkImageProvider(photoUrl)
+                    : null,
+                child:
+                    (_newImageFile == null &&
+                        (photoUrl == null || photoUrl.isEmpty))
+                    ? Icon(
+                        Icons.person_outline_rounded,
+                        size: 64,
+                        color: textSecondary,
+                      )
                     : null,
               ),
             ),
@@ -531,7 +560,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, size: 20, color: Colors.white),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 20,
+                    color: Colors.white,
+                  ),
                 ),
               ),
           ],
@@ -589,9 +622,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     TextEditingController controller,
     String label,
     IconData icon,
-    String? Function(String?)? validator,
-    {TextInputType? keyboardType}
-  ) {
+    String? Function(String?)? validator, {
+    TextInputType? keyboardType,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
@@ -629,7 +662,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           ),
           filled: true,
           fillColor: backgroundColor,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -648,7 +684,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 color: backgroundColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.person_off_outlined, size: 80, color: textSecondary.withOpacity(0.5)),
+              child: Icon(
+                Icons.person_off_outlined,
+                size: 80,
+                color: textSecondary.withOpacity(0.5),
+              ),
             ),
             const SizedBox(height: 32),
             Text(
@@ -684,7 +724,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -713,10 +756,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(
-            color: primaryColor,
-            strokeWidth: 3,
-          ),
+          child: CircularProgressIndicator(color: primaryColor, strokeWidth: 3),
         ),
       );
     }
@@ -787,7 +827,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         const SizedBox(height: 24),
                         _buildProfilePhoto(),
                         const SizedBox(height: 40),
-                        
+
                         Container(
                           decoration: BoxDecoration(
                             color: cardColor,
@@ -810,15 +850,35 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                   : CrossFadeState.showFirst,
                               firstChild: Column(
                                 children: [
-                                  _buildInfoRow('College', _userData?['college'] ?? '', Icons.school_outlined),
+                                  _buildInfoRow(
+                                    'College',
+                                    _userData?['college'] ?? '',
+                                    Icons.school_outlined,
+                                  ),
                                   Divider(color: borderColor, height: 32),
-                                  _buildInfoRow('Name', _userData?['name'] ?? '', Icons.person_outline_rounded),
+                                  _buildInfoRow(
+                                    'Name',
+                                    _userData?['name'] ?? '',
+                                    Icons.person_outline_rounded,
+                                  ),
                                   Divider(color: borderColor, height: 32),
-                                  _buildInfoRow('Branch', _userData?['branch'] ?? '', Icons.account_tree_outlined),
+                                  _buildInfoRow(
+                                    'Branch',
+                                    _userData?['branch'] ?? '',
+                                    Icons.account_tree_outlined,
+                                  ),
                                   Divider(color: borderColor, height: 32),
-                                  _buildInfoRow('Mobile', _userData?['mobile'] ?? '', Icons.phone_outlined),
+                                  _buildInfoRow(
+                                    'Mobile',
+                                    _userData?['mobile'] ?? '',
+                                    Icons.phone_outlined,
+                                  ),
                                   Divider(color: borderColor, height: 32),
-                                  _buildInfoRow('Email', _userData?['email'] ?? '', Icons.email_outlined),
+                                  _buildInfoRow(
+                                    'Email',
+                                    _userData?['email'] ?? '',
+                                    Icons.email_outlined,
+                                  ),
                                 ],
                               ),
                               secondChild: Column(
@@ -855,8 +915,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                       if (value?.trim().isEmpty ?? true) {
                                         return 'Mobile number is required';
                                       }
-                                      final digitsOnly = value!.replaceAll(RegExp(r'\D'), '');
-                                      if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+                                      final digitsOnly = value!.replaceAll(
+                                        RegExp(r'\D'),
+                                        '',
+                                      );
+                                      if (digitsOnly.length < 7 ||
+                                          digitsOnly.length > 15) {
                                         return 'Mobile must be 7-15 digits';
                                       }
                                       return null;
@@ -868,7 +932,46 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             ),
                           ),
                         ),
-                        
+                        const SizedBox(height: 20),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      MySubmittedPapersPage(), // change page name if needed
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.description_outlined,
+                              size: 20,
+                            ),
+                            label: Text(
+                              'View My Submitted Papers',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white, 
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
                         if (_isEditMode) ...[
                           const SizedBox(height: 24),
                           Row(
@@ -877,8 +980,13 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                 child: OutlinedButton(
                                   onPressed: _isSaving ? null : _toggleEditMode,
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    side: const BorderSide(color: borderColor, width: 1),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    side: const BorderSide(
+                                      color: borderColor,
+                                      width: 1,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
@@ -897,10 +1005,14 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               const SizedBox(width: 16),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _isSaving || _isUploadingPhoto ? null : _saveProfile,
+                                  onPressed: _isSaving || _isUploadingPhoto
+                                      ? null
+                                      : _saveProfile,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
@@ -912,7 +1024,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                           width: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.white,
+                                                ),
                                           ),
                                         )
                                       : Text(
@@ -929,7 +1044,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             ],
                           ),
                         ],
-                        
+
                         const SizedBox(height: 40),
                       ],
                     ),
