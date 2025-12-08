@@ -1,3 +1,5 @@
+// lib/theme/app_theme.dart
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -67,9 +69,12 @@ class AppTheme {
     color: textPrimary,
   );
 
-  // Theme Data
+  // -------- THEME DATA --------
+
+  /// Light theme
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
+    brightness: Brightness.light,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: backgroundColor,
     colorScheme: const ColorScheme.light(
@@ -83,6 +88,23 @@ class AppTheme {
       bodyLarge: inputTextStyle,
       labelLarge: labelTextStyle,
     ),
+  );
+
+  /// Dark theme
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+    ),
+    scaffoldBackgroundColor: const Color(0xFF020617),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF020617),
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    fontFamily: GoogleFonts.poppins().fontFamily,
   );
 
   // Input Decoration
@@ -122,7 +144,7 @@ class AppTheme {
     );
   }
 
-  // Box Shadow
+  // Shadows
   static List<BoxShadow> cardShadow = [
     BoxShadow(
       color: Colors.black.withOpacity(0.08),

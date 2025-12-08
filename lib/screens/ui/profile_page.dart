@@ -124,6 +124,23 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
+  Future<void> _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      if (!mounted) return;
+
+      // Go back to root; AuthGate will show EntryScreen because user is now signed out
+      Navigator.of(context).popUntil((route) => route.isFirst);
+
+      _showSnackBar('Logged out successfully!');
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error logging out. Please try again.', isError: true);
+      }
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -934,44 +951,81 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         const SizedBox(height: 20),
 
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      MySubmittedPapersPage(), // change page name if needed
+                        // Show these only when NOT editing
+                        if (!_isEditMode) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MySubmittedPapersPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.description_outlined,
+                                size: 20,
+                              ),
+                              label: Text(
+                                'View My Submitted Papers',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  letterSpacing: -0.2,
                                 ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.description_outlined,
-                              size: 20,
-                            ),
-                            label: Text(
-                              'View My Submitted Papers',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                                letterSpacing: -0.2,
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white, 
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 0,
                               ),
-                              elevation: 0,
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _logout,
+                              icon: const Icon(Icons.logout_rounded, size: 20),
+                              label: Text(
+                                'Logout',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  letterSpacing: -0.2,
+                                  color: errorColor,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                side: const BorderSide(
+                                  color: errorColor,
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Show these only when editing
                         if (_isEditMode) ...[
                           const SizedBox(height: 24),
                           Row(

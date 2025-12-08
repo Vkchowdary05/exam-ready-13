@@ -1,6 +1,9 @@
 // lib/screens/ui/topics_detail_page.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class TopicsDetailPage extends StatefulWidget {
   final String documentName;
@@ -116,6 +119,249 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
     super.dispose();
   }
 
+  // =========================
+  // AI STUDY PROMPT BUILDER
+  // =========================
+  // =========================
+  // AI STUDY PROMPT BUILDER
+  // =========================
+  String _buildAiStudyPrompt() {
+    final isMidExam = widget.examType.toLowerCase().contains('mid');
+
+    // Marks and word ranges
+    final int marksPerQuestion = isMidExam ? 5 : 10;
+    final int minWords = isMidExam ? 400 : 600;
+    final int maxWords = isMidExam ? 500 : 700;
+
+    final topicsList = _topics.keys.toList();
+
+    if (topicsList.isEmpty) {
+      final fallback = {
+        "version": "1.0",
+        "type": "exam_study_prompt",
+        "note":
+            "No topics were provided. Ask the user to paste or provide a list of topics first, then generate exam-focused answers.",
+      };
+      return jsonEncode(fallback);
+    }
+
+    final prompt = {
+      "version": "2.0",
+      "type": "exam_study_prompt",
+      "description":
+          "JSON prompt for an AI tutor to generate structured, exam-focused answers with images and explanations.",
+      "exam_context": {
+        "college": widget.college,
+        "branch": widget.branch,
+        "semester": widget.semester,
+        "subject": widget.subject,
+        "exam_type": widget.examType,
+        "marks_per_question": marksPerQuestion,
+        "word_range_per_answer": {"min": minWords, "max": maxWords},
+        "expected_topic_count": topicsList.length,
+      },
+      "role_instructions": {
+        "role":
+            "You are an expert B.Tech tutor helping a student prepare for their exam.",
+        "audience_level":
+            "Average B.Tech student who needs clear, exam-oriented explanations.",
+        "main_goal":
+            "For EACH topic, generate a full-mark, exam-ready answer with simple language, strong structure, and visual explanation.",
+      },
+      "answer_style": {
+        "language": "Simple, clear English – no unnecessary jargon.",
+        "tone": "Supportive, teacher-like, exam-focused.",
+        "depth":
+            "Explain deeply enough to justify full marks for a {marks_per_question}-mark answer within the given word range.",
+        "structure_per_topic": [
+          "Heading: 'Q{n}. {TOPIC_NAME}'",
+          "Definition or short introduction",
+          "Detailed explanation with key points (bullets or numbered steps when useful)",
+          "Google image search & visual explanation (see image_guidelines)",
+          "Simple real-world example or scenario",
+          "Short summary / key takeaway points",
+        ],
+        "word_range_hint":
+            "Each answer should be between $minWords and $maxWords words. Do not go significantly below the minimum.",
+      },
+      "image_guidelines": {
+        "goal":
+            "Use web images (e.g., from Google Images or similar) to visually explain concepts, then describe and connect them to the topic.",
+        "instructions": [
+          "For EACH topic, if you have access to the open internet or image search tools (e.g., Google Images, web_with_bing, or similar), search for 1–2 simple, relevant images.",
+          "Choose images that make the concept easier to understand (e.g., architectures, diagrams, flow charts, tables).",
+          "DO NOT just give the image URL; instead, describe the image clearly in text.",
+          "Explain what is shown in the image and how it relates to the topic step by step.",
+          "If you DO NOT have access to the internet or image tools, create a simple imaginary diagram and describe it as if it were an image.",
+          "Use a small XML-like structure to represent the diagram or image contents, for example:",
+          "<diagram name=\"CLIENT_SERVER_ARCHITECTURE\">\\n  <node role=\"client\" />\\n  <node role=\"application_server\" />\\n  <node role=\"database_server\" />\\n</diagram>",
+          "Keep XML diagrams short, readable, and focused on key components only.",
+        ],
+      },
+      "per_topic_answer_template": {
+        "heading_example": "Q1. TOPIC NAME",
+        "sections": [
+          {
+            "name": "definition",
+            "description":
+                "1–3 sentences that define the topic and set context in simple words.",
+          },
+          {
+            "name": "explanation",
+            "description":
+                "Main body: key points, subheadings, bullet lists, comparisons, pros/cons, steps, etc.",
+          },
+          {
+            "name": "image_or_diagram_explanation",
+            "description":
+                "If image search is available, imagine you have opened 1–2 Google images for this topic. Describe what those images show and how they explain the concept. If no real image search is available, create a simple XML-style pseudo-diagram and explain it in text.",
+          },
+          {
+            "name": "example",
+            "description":
+                "A very simple, concrete example or use case: code snippet, real-world scenario, or short story that grounds the concept.",
+          },
+          {
+            "name": "summary",
+            "description":
+                "2–4 bullet points summarizing the main ideas that should be remembered for the exam.",
+          },
+        ],
+      },
+      "output_requirements": {
+        "topic_order":
+            "Answer ALL topics in the same order as they appear in the list below.",
+        "naming":
+            "For each topic, use a heading like 'Q{n}. {TOPIC_NAME}' as a title.",
+        "coverage":
+            "Do NOT skip any topic. Generate answers for every topic provided.",
+        "formatting":
+            "Use clear headings, subheadings, and bullet lists for readability.",
+        "consistency":
+            "Apply the same structure to every topic, adapting where necessary.",
+      },
+      "topics": List.generate(
+        topicsList.length,
+        (index) => {"number": index + 1, "title": topicsList[index]},
+      ),
+      "final_instruction":
+          "Now, using all the information above, generate the answers for ALL topics in 'topics' in order (Q1, Q2, Q3, ...). For each topic, follow the structure, word range, and image/diagram explanation rules strictly.",
+    };
+
+    return jsonEncode(prompt);
+  }
+
+  Widget _buildAiStudyHelperCard() {
+    final isMidExam = widget.examType.toLowerCase().contains('mid');
+
+    // Updated according to your new requirement
+    final int marksPerQuestion = isMidExam ? 5 : 10;
+    final String targetWords = isMidExam ? '400–500' : '600–700';
+
+    final int topicsCount = _topics.length;
+    final bool hasTopics = topicsCount > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.indigo.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.indigo.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.smart_toy_outlined,
+                  color: Colors.indigo.shade700,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Study Helper',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade900,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      hasTopics
+                          ? 'Copy a powerful JSON-based AI prompt to generate detailed exam answers for all $topicsCount topics. '
+                                '\n• ${marksPerQuestion}-mark answers (${targetWords} words each)'
+                                '\n• Includes Google image explanation instructions'
+                                '\n• Works with ChatGPT, Claude, Gemini, Groq, etc.'
+                          : 'Topics are not available yet. Once topics appear, you can copy a ready-made JSON AI prompt for this paper.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: hasTopics
+                  ? () {
+                      final prompt = _buildAiStudyPrompt();
+                      Clipboard.setData(ClipboardData(text: prompt));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text("JSON AI study prompt copied"),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  : null,
+              icon: const Icon(Icons.copy_rounded, size: 18),
+              label: const Text(
+                'Copy JSON Prompt',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,6 +413,8 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
                                 _buildDetailsCard(),
                                 const SizedBox(height: 20),
                                 _buildStatsCard(),
+                                const SizedBox(height: 20),
+                                _buildAiStudyHelperCard(),
                                 const SizedBox(height: 20),
                                 _buildSectionHeader(),
                               ],
