@@ -1,17 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-
 class AuthService {
+  // Firebase Auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Google Sign-In instance
+  // Use your WEB CLIENT ID for web, and null for mobile (auto config)
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '911973583663-ciict72ribfd16shrdnd59sr22vvidre.apps.googleusercontent.com'
+        : null,
+  );
 
   // Get current user
   User? get currentUser => _auth.currentUser;
 
   // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Sign Up with Email and Password
   Future<Map<String, dynamic>> signUp({
@@ -28,7 +35,7 @@ class AuthService {
       // Update display name and reload user to persist changes
       await result.user?.updateDisplayName(name);
       await result.user?.reload();
-      
+
       // Get updated user
       User? updatedUser = _auth.currentUser;
 
@@ -38,10 +45,7 @@ class AuthService {
         'user': updatedUser,
       };
     } on FirebaseAuthException catch (e) {
-      return {
-        'success': false,
-        'message': _getErrorMessage(e.code),
-      };
+      return {'success': false, 'message': _getErrorMessage(e.code)};
     } catch (e) {
       return {
         'success': false,
@@ -67,10 +71,7 @@ class AuthService {
         'user': result.user,
       };
     } on FirebaseAuthException catch (e) {
-      return {
-        'success': false,
-        'message': _getErrorMessage(e.code),
-      };
+      return {'success': false, 'message': _getErrorMessage(e.code)};
     } catch (e) {
       return {
         'success': false,
@@ -80,9 +81,7 @@ class AuthService {
   }
 
   // Reset Password
-  Future<Map<String, dynamic>> resetPassword({
-    required String email,
-  }) async {
+  Future<Map<String, dynamic>> resetPassword({required String email}) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
 
@@ -91,10 +90,7 @@ class AuthService {
         'message': 'Password reset email sent! Check your inbox.',
       };
     } on FirebaseAuthException catch (e) {
-      return {
-        'success': false,
-        'message': _getErrorMessage(e.code),
-      };
+      return {'success': false, 'message': _getErrorMessage(e.code)};
     } catch (e) {
       return {
         'success': false,
@@ -103,7 +99,7 @@ class AuthService {
     }
   }
 
-  // Sign Out
+  // Sign Out (generic)
   Future<void> signOut() async {
     await _auth.signOut();
   }
@@ -115,18 +111,15 @@ class AuthService {
   }) async {
     try {
       User? user = _auth.currentUser;
-      
+
       if (user == null) {
-        return {
-          'success': false,
-          'message': 'No user is currently signed in.',
-        };
+        return {'success': false, 'message': 'No user is currently signed in.'};
       }
 
       if (displayName != null) {
         await user.updateDisplayName(displayName);
       }
-      
+
       if (photoURL != null) {
         await user.updatePhotoURL(photoURL);
       }
@@ -140,10 +133,7 @@ class AuthService {
         'user': updatedUser,
       };
     } on FirebaseAuthException catch (e) {
-      return {
-        'success': false,
-        'message': _getErrorMessage(e.code),
-      };
+      return {'success': false, 'message': _getErrorMessage(e.code)};
     } catch (e) {
       return {
         'success': false,
@@ -156,25 +146,16 @@ class AuthService {
   Future<Map<String, dynamic>> deleteAccount() async {
     try {
       User? user = _auth.currentUser;
-      
+
       if (user == null) {
-        return {
-          'success': false,
-          'message': 'No user is currently signed in.',
-        };
+        return {'success': false, 'message': 'No user is currently signed in.'};
       }
 
       await user.delete();
 
-      return {
-        'success': true,
-        'message': 'Account deleted successfully.',
-      };
+      return {'success': true, 'message': 'Account deleted successfully.'};
     } on FirebaseAuthException catch (e) {
-      return {
-        'success': false,
-        'message': _getErrorMessage(e.code),
-      };
+      return {'success': false, 'message': _getErrorMessage(e.code)};
     } catch (e) {
       return {
         'success': false,
@@ -222,29 +203,29 @@ class AuthService {
         return 'Authentication error: $code. Please try again.';
     }
   }
+
+  // Google Sign-In
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        return {
-          'success': false,
-          'message': 'Google Sign-In was cancelled',
-        };
+        return {'success': false, 'message': 'Google Sign-In was cancelled'};
       }
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
-      final credential = GoogleAuthProvider.credential(
+      final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       // Sign in to Firebase with the Google credential
-      final UserCredential userCredential = 
+      final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
       return {
@@ -265,7 +246,7 @@ class AuthService {
     }
   }
 
-  /// Sign out from Google
+  /// Sign out from Google + Firebase
   Future<void> signOutGoogle() async {
     await _googleSignIn.signOut();
     await _auth.signOut();

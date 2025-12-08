@@ -67,54 +67,92 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 24,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildQuickActions(),
-                          const SizedBox(height: 40),
-                          _buildSectionTitle('Overview'),
-                          const SizedBox(height: 20),
-                          _buildStatsGrid(),
-                          const SizedBox(height: 40),
-                          _buildSectionTitle('Recent Activity'),
-                          const SizedBox(height: 20),
-                          _buildRecentActivity(
-                            recentActivity,
-                            recentQuestionPapers,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isMobile = screenWidth < 600;
+            final isTablet = screenWidth >= 600 && screenWidth < 1024;
+            final isDesktop = screenWidth >= 1024;
+
+            return Column(
+              children: [
+                _buildHeader(isMobile, isTablet, isDesktop),
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 1400),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 20 : (isTablet ? 32 : 48),
+                            vertical: isMobile ? 24 : (isTablet ? 28 : 32),
                           ),
-                          const SizedBox(height: 24),
-                        ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildQuickActions(isMobile, isTablet, isDesktop),
+                              SizedBox(
+                                height: isMobile ? 40 : (isTablet ? 48 : 56),
+                              ),
+                              _buildSectionTitle(
+                                'Overview',
+                                isMobile,
+                                isTablet,
+                              ),
+                              SizedBox(
+                                height: isMobile ? 20 : (isTablet ? 24 : 28),
+                              ),
+                              _buildStatsGrid(isMobile, isTablet, isDesktop),
+                              SizedBox(
+                                height: isMobile ? 40 : (isTablet ? 48 : 56),
+                              ),
+                              _buildSectionTitle(
+                                'Recent Activity',
+                                isMobile,
+                                isTablet,
+                              ),
+                              SizedBox(
+                                height: isMobile ? 20 : (isTablet ? 24 : 28),
+                              ),
+                              _buildRecentActivity(
+                                recentActivity,
+                                recentQuestionPapers,
+                                isMobile,
+                                isTablet,
+                                isDesktop,
+                              ),
+                              SizedBox(
+                                height: isMobile ? 24 : (isTablet ? 32 : 40),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile, bool isTablet, bool isDesktop) {
+    final titleSize = isMobile ? 24.0 : (isTablet ? 26.0 : 28.0);
+    final subtitleSize = isMobile ? 13.0 : (isTablet ? 14.0 : 15.0);
+    final horizontalPadding = isMobile ? 20.0 : (isTablet ? 32.0 : 48.0);
+    final verticalPadding = isMobile ? 20.0 : (isTablet ? 24.0 : 28.0);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
         boxShadow: [
@@ -125,69 +163,81 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Welcome Back',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: textSecondary,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.2,
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome Back',
+                      style: GoogleFonts.inter(
+                        fontSize: subtitleSize,
+                        color: textSecondary,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Exam Ready',
+                      style: GoogleFonts.inter(
+                        fontSize: titleSize,
+                        color: textPrimary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Exam Ready',
-                style: GoogleFonts.inter(
-                  fontSize: 24,
-                  color: textPrimary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.8,
-                ),
+              Row(
+                children: [
+                  _buildHeaderIcon(Icons.notifications_none_rounded, () {
+                    _showNotifications();
+                  }, isMobile),
+                  SizedBox(width: isMobile ? 12 : 16),
+                  _buildHeaderIcon(Icons.settings_outlined, () {
+                    _showSettings();
+                  }, isMobile),
+                ],
               ),
             ],
           ),
-          Row(
-            children: [
-              _buildHeaderIcon(Icons.notifications_none_rounded, () {
-                _showNotifications();
-              }),
-              const SizedBox(width: 12),
-              _buildHeaderIcon(Icons.settings_outlined, () {
-                _showSettings();
-              }),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon, VoidCallback onTap) {
+  Widget _buildHeaderIcon(IconData icon, VoidCallback onTap, bool isMobile) {
+    final size = isMobile ? 22.0 : 24.0;
+    final padding = isMobile ? 10.0 : 12.0;
+
     return AnimatedScaleButton(
       onPressed: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor, width: 1),
         ),
-        child: Icon(icon, color: textSecondary, size: 22),
+        child: Icon(icon, color: textSecondary, size: size),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, bool isMobile, bool isTablet) {
+    final fontSize = isMobile ? 20.0 : (isTablet ? 22.0 : 24.0);
+
     return Text(
       title,
       style: GoogleFonts.inter(
-        fontSize: 20,
+        fontSize: fontSize,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.5,
@@ -195,7 +245,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(bool isMobile, bool isTablet, bool isDesktop) {
+    if (isDesktop) {
+      return Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildActionCard(
+                  'Search Papers',
+                  Icons.search_rounded,
+                  primaryColor,
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SearchQuestionPaperPage(),
+                      ),
+                    );
+                  },
+                  isMobile,
+                  isTablet,
+                  isDesktop,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _buildActionCard(
+                  'Browse Topics',
+                  Icons.auto_stories_rounded,
+                  accentPurple,
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TopicsSearchPage(),
+                      ),
+                    );
+                  },
+                  isMobile,
+                  isTablet,
+                  isDesktop,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Row(
       children: [
         Expanded(
@@ -210,9 +307,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               );
             },
+            isMobile,
+            isTablet,
+            isDesktop,
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: isMobile ? 16 : 20),
         Expanded(
           child: _buildActionCard(
             'Browse Topics',
@@ -225,6 +325,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               );
             },
+            isMobile,
+            isTablet,
+            isDesktop,
           ),
         ),
       ],
@@ -236,11 +339,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     IconData icon,
     Color color,
     VoidCallback onTap,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
   ) {
+    final padding = isMobile ? 24.0 : (isTablet ? 28.0 : 32.0);
+    final iconSize = isMobile ? 32.0 : (isTablet ? 36.0 : 40.0);
+    final iconPadding = isMobile ? 14.0 : (isTablet ? 16.0 : 18.0);
+    final titleSize = isMobile ? 15.0 : (isTablet ? 16.0 : 17.0);
+
     return AnimatedScaleButton(
       onPressed: onTap,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [color.withOpacity(0.08), color.withOpacity(0.04)],
@@ -260,20 +371,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(iconPadding),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 32),
+              child: Icon(icon, color: color, size: iconSize),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isMobile ? 16 : 20),
             Text(
               title,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 color: textPrimary,
-                fontSize: 15,
+                fontSize: titleSize,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.2,
               ),
@@ -284,7 +395,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(bool isMobile, bool isTablet, bool isDesktop) {
     final List<_StatCardData> stats = [
       _StatCardData(
         title: 'Colleges',
@@ -316,37 +427,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        int crossAxisCount;
-        if (constraints.maxWidth < 600) {
-          crossAxisCount = 2;
-        } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 2;
-        } else {
-          crossAxisCount = 4;
-        }
+    final crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
+    final spacing = isMobile ? 16.0 : (isTablet ? 20.0 : 24.0);
+    final aspectRatio = isMobile ? 1.4 : (isTablet ? 1.35 : 1.3);
 
-        return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: constraints.maxWidth < 600 ? 1.4 : 1.3,
-          ),
-          itemCount: stats.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            final stat = stats[index];
-            return _StatCardFromFirestore(
-              title: stat.title,
-              icon: stat.icon,
-              collection: stat.collection,
-              color: stat.color,
-              delay: stat.delay,
-            );
-          },
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        childAspectRatio: aspectRatio,
+      ),
+      itemCount: stats.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (context, index) {
+        final stat = stats[index];
+        return _StatCardFromFirestore(
+          title: stat.title,
+          icon: stat.icon,
+          collection: stat.collection,
+          color: stat.color,
+          delay: stat.delay,
         );
       },
     );
@@ -355,7 +457,93 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildRecentActivity(
     AsyncValue<List<Map<String, dynamic>>> recentActivity,
     AsyncValue<List<QuestionPaper>> recentQuestionPapers,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
   ) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                recentActivity.when(
+                  data: (activities) {
+                    if (activities.isEmpty) {
+                      return _buildEmptyState(
+                        'No recent activity',
+                        Icons.timeline_rounded,
+                        isMobile,
+                      );
+                    }
+                    return Column(
+                      children: activities.take(3).map((activity) {
+                        return _buildActivityItem(
+                          activity['title'] ?? 'Activity',
+                          activity['description'] ?? 'No description',
+                          _getActivityIcon(activity['type']),
+                          _getActivityColor(activity['type']),
+                          _formatTimestamp(activity['timestamp']),
+                          isMobile,
+                          isTablet,
+                        );
+                      }).toList(),
+                    );
+                  },
+                  loading: () => const ModernLoadingIndicator(
+                    message: 'Loading activity...',
+                    type: LoadingType.dots,
+                  ),
+                  error: (error, stackTrace) =>
+                      _buildErrorState('Failed to load activity', isMobile),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                recentQuestionPapers.when(
+                  data: (papers) {
+                    if (papers.isEmpty) {
+                      return _buildEmptyState(
+                        'No recent papers',
+                        Icons.description_outlined,
+                        isMobile,
+                      );
+                    }
+                    return Column(
+                      children: papers.take(3).map((paper) {
+                        return _buildActivityItem(
+                          'New paper added',
+                          '${paper.subject} - ${paper.college}',
+                          Icons.library_add_check_outlined,
+                          primaryColor,
+                          _formatTimestamp(paper.uploadedAt),
+                          isMobile,
+                          isTablet,
+                        );
+                      }).toList(),
+                    );
+                  },
+                  loading: () => const ModernLoadingIndicator(
+                    message: 'Loading papers...',
+                    type: LoadingType.dots,
+                  ),
+                  error: (error, stackTrace) =>
+                      _buildErrorState('Failed to load papers', isMobile),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         recentActivity.when(
@@ -364,6 +552,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return _buildEmptyState(
                 'No recent activity',
                 Icons.timeline_rounded,
+                isMobile,
               );
             }
             return Column(
@@ -374,6 +563,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   _getActivityIcon(activity['type']),
                   _getActivityColor(activity['type']),
                   _formatTimestamp(activity['timestamp']),
+                  isMobile,
+                  isTablet,
                 );
               }).toList(),
             );
@@ -383,15 +574,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             type: LoadingType.dots,
           ),
           error: (error, stackTrace) =>
-              _buildErrorState('Failed to load activity'),
+              _buildErrorState('Failed to load activity', isMobile),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: isMobile ? 16 : 20),
         recentQuestionPapers.when(
           data: (papers) {
             if (papers.isEmpty) {
               return _buildEmptyState(
                 'No recent papers',
                 Icons.description_outlined,
+                isMobile,
               );
             }
             return Column(
@@ -402,6 +594,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   Icons.library_add_check_outlined,
                   primaryColor,
                   _formatTimestamp(paper.uploadedAt),
+                  isMobile,
+                  isTablet,
                 );
               }).toList(),
             );
@@ -411,7 +605,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             type: LoadingType.dots,
           ),
           error: (error, stackTrace) =>
-              _buildErrorState('Failed to load papers'),
+              _buildErrorState('Failed to load papers', isMobile),
         ),
       ],
     );
@@ -423,12 +617,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     IconData icon,
     Color color,
     String time,
+    bool isMobile,
+    bool isTablet,
   ) {
+    final padding = isMobile ? 18.0 : (isTablet ? 20.0 : 22.0);
+    final iconSize = isMobile ? 22.0 : (isTablet ? 24.0 : 26.0);
+    final iconPadding = isMobile ? 11.0 : (isTablet ? 12.0 : 13.0);
+    final titleSize = isMobile ? 15.0 : (isTablet ? 16.0 : 16.0);
+    final subtitleSize = isMobile ? 13.0 : (isTablet ? 14.0 : 14.0);
+    final timeSize = isMobile ? 12.0 : (isTablet ? 13.0 : 13.0);
+
     return AnimatedScaleButton(
       onPressed: () {},
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(18),
+        margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
@@ -444,7 +647,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(11),
+              padding: EdgeInsets.all(iconPadding),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [color.withOpacity(0.12), color.withOpacity(0.06)],
@@ -453,9 +656,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: Icon(icon, color: color, size: iconSize),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: isMobile ? 16 : 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,7 +666,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   Text(
                     title,
                     style: GoogleFonts.inter(
-                      fontSize: 15,
+                      fontSize: titleSize,
                       fontWeight: FontWeight.w600,
                       color: textPrimary,
                       letterSpacing: -0.2,
@@ -473,7 +676,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
+                      fontSize: subtitleSize,
                       color: textSecondary,
                       fontWeight: FontWeight.w400,
                     ),
@@ -483,23 +686,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ],
               ),
             ),
-            Text(
-              time,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: textSecondary,
-                fontWeight: FontWeight.w500,
+            if (!isMobile || time.length < 8)
+              Text(
+                time,
+                style: GoogleFonts.inter(
+                  fontSize: timeSize,
+                  color: textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon) {
+  Widget _buildEmptyState(String message, IconData icon, bool isMobile) {
+    final padding = isMobile ? 32.0 : 40.0;
+    final iconSize = isMobile ? 40.0 : 48.0;
+    final fontSize = isMobile ? 14.0 : 15.0;
+
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -516,7 +724,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
               child: Icon(
                 icon,
-                size: 40,
+                size: iconSize,
                 color: textSecondary.withOpacity(0.4),
               ),
             ),
@@ -525,7 +733,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               message,
               style: GoogleFonts.inter(
                 color: textSecondary,
-                fontSize: 14,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -535,9 +743,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildErrorState(String message) {
+  Widget _buildErrorState(String message, bool isMobile) {
+    final padding = isMobile ? 18.0 : 20.0;
+    final fontSize = isMobile ? 14.0 : 15.0;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(16),
@@ -563,7 +774,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               message,
               style: GoogleFonts.inter(
                 color: const Color(0xFFDC2626),
-                fontSize: 14,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -630,25 +841,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const QuestionPaperSubmissionPage(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = MediaQuery.of(context).size.width < 600;
+
+        return FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const QuestionPaperSubmissionPage(),
+              ),
+            );
+          },
+          backgroundColor: primaryColor,
+          elevation: 4,
+          icon: Icon(Icons.add_rounded, size: isMobile ? 22 : 24),
+          label: Text(
+            'Add Paper',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: isMobile ? 15 : 16,
+              letterSpacing: -0.2,
+            ),
           ),
         );
       },
-      backgroundColor: primaryColor,
-      elevation: 4,
-      icon: const Icon(Icons.add_rounded, size: 22),
-      label: Text(
-        'Add Paper',
-        style: GoogleFonts.inter(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-          letterSpacing: -0.2,
-        ),
-      ),
     );
   }
 
@@ -787,17 +1004,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // inside _showSettings() in DashboardScreen's State:
-
   void _showSettings() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        final isDark =
-            ref.watch(themeModeProvider) == ThemeMode.dark; // read current mode
-
+        final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
         return Container(
           decoration: const BoxDecoration(
             color: cardColor,
@@ -826,15 +1039,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Profile
               _buildSettingItem('Profile', Icons.person_outline_rounded, () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               }),
-
-              // Dark Mode toggle
               _buildSettingItem(
                 'Dark Mode',
                 Icons.dark_mode_outlined,
@@ -846,12 +1055,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         ? ThemeMode.dark
                         : ThemeMode.light;
                   },
-
                   activeColor: primaryColor,
                 ),
               ),
-
-              // Other settings
               _buildSettingItem('Language', Icons.language_outlined, () {}),
               _buildSettingItem(
                 'Notifications',
@@ -865,7 +1071,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 Icons.help_outline_rounded,
                 () {},
               ),
-
               const SizedBox(height: 8),
             ],
           ),
@@ -927,7 +1132,6 @@ class _StatCardData {
   final String collection;
   final Color color;
   final int delay;
-
   _StatCardData({
     required this.title,
     required this.icon,
@@ -943,7 +1147,6 @@ class _StatCardFromFirestore extends StatefulWidget {
   final String collection;
   final Color color;
   final int delay;
-
   const _StatCardFromFirestore({
     required this.title,
     required this.icon,
@@ -951,7 +1154,6 @@ class _StatCardFromFirestore extends StatefulWidget {
     required this.color,
     required this.delay,
   });
-
   @override
   State<_StatCardFromFirestore> createState() => _StatCardFromFirestoreState();
 }
@@ -961,7 +1163,6 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
   @override
   void initState() {
     super.initState();
@@ -969,7 +1170,6 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOut,
@@ -1003,75 +1203,94 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
           stream: _fetchCount(widget.collection),
           builder: (context, snapshot) {
             final count = snapshot.data ?? 0;
-            return Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          widget.color.withOpacity(0.12),
-                          widget.color.withOpacity(0.06),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 150;
+                final padding = isMobile ? 16.0 : 20.0;
+                final iconSize = isMobile ? 24.0 : 26.0;
+                final iconPadding = isMobile ? 10.0 : 12.0;
+                final numberSize = isMobile ? 24.0 : 28.0;
+                final labelSize = isMobile ? 12.0 : 13.0;
+
+                return Container(
+                  padding: EdgeInsets.all(padding),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1,
                     ),
-                    child: Icon(widget.icon, color: widget.color, size: 26),
-                  ),
-                  const SizedBox(height: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (snapshot.connectionState == ConnectionState.waiting)
-                        Container(
-                          width: 50,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE2E8F0),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        )
-                      else
-                        Text(
-                          count.toString(),
-                          style: GoogleFonts.inter(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
-                            letterSpacing: -1,
-                          ),
-                        ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.title,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: const Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                ],
-              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(iconPadding),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              widget.color.withOpacity(0.12),
+                              widget.color.withOpacity(0.06),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          widget.icon,
+                          color: widget.color,
+                          size: iconSize,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting)
+                            Container(
+                              width: 50,
+                              height: isMobile ? 24 : 28,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE2E8F0),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            )
+                          else
+                            Text(
+                              count.toString(),
+                              style: GoogleFonts.inter(
+                                fontSize: numberSize,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                                letterSpacing: -1,
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.title,
+                            style: GoogleFonts.inter(
+                              fontSize: labelSize,
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         ),
@@ -1086,7 +1305,6 @@ class _StatCardFromFirestoreState extends State<_StatCardFromFirestore>
           .snapshots()
           .map((snapshot) => snapshot.docs.length);
     }
-
     if (collection == "colleges") {
       return Stream.value(30);
     }

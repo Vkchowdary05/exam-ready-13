@@ -122,9 +122,6 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
   // =========================
   // AI STUDY PROMPT BUILDER
   // =========================
-  // =========================
-  // AI STUDY PROMPT BUILDER
-  // =========================
   String _buildAiStudyPrompt() {
     final isMidExam = widget.examType.toLowerCase().contains('mid');
 
@@ -254,7 +251,6 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
   Widget _buildAiStudyHelperCard() {
     final isMidExam = widget.examType.toLowerCase().contains('mid');
 
-    // Updated according to your new requirement
     final int marksPerQuestion = isMidExam ? 5 : 10;
     final String targetWords = isMidExam ? '400–500' : '600–700';
 
@@ -303,9 +299,9 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
                     Text(
                       hasTopics
                           ? 'Copy a powerful JSON-based AI prompt to generate detailed exam answers for all $topicsCount topics. '
-                                '\n• ${marksPerQuestion}-mark answers (${targetWords} words each)'
-                                '\n• Includes Google image explanation instructions'
-                                '\n• Works with ChatGPT, Claude, Gemini, Groq, etc.'
+                              '\n• ${marksPerQuestion}-mark answers (${targetWords} words each)'
+                              '\n• Includes Google image explanation instructions'
+                              '\n• Works with ChatGPT, Claude, Gemini, Groq, etc.'
                           : 'Topics are not available yet. Once topics appear, you can copy a ready-made JSON AI prompt for this paper.',
                       style: TextStyle(
                         fontSize: 13,
@@ -327,10 +323,10 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
                       final prompt = _buildAiStudyPrompt();
                       Clipboard.setData(ClipboardData(text: prompt));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text("JSON AI study prompt copied"),
+                        const SnackBar(
+                          content: Text("JSON AI study prompt copied"),
                           behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
+                          duration: Duration(seconds: 2),
                         ),
                       );
                     }
@@ -362,13 +358,17 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
     );
   }
 
+  // =========================
+  // RESPONSIVE BUILD
+  // =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
+        centerTitle: false,
         title: Text(
           'Important Topics',
           style: TextStyle(
@@ -388,62 +388,140 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
           ),
         ),
         child: SafeArea(
-          child: _isLoading
-              ? Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+
+              // Simple breakpoint strategy
+              final bool isDesktop = width >= 1024;
+              final bool isTablet = width >= 600 && width < 1024;
+              final bool useGridForTopics = isDesktop; // grid on big screens
+
+              // Constrain content width on larger screens for a relaxed feel
+              final double maxContentWidth = isDesktop
+                  ? 900
+                  : isTablet
+                      ? 720
+                      : width;
+
+              // Softer padding on mobile, a bit more breathing room on big screens
+              final double horizontalPadding = isDesktop
+                  ? 32
+                  : isTablet
+                      ? 24
+                      : 16;
+
+              if (_isLoading) {
+                return Center(
                   child: CircularProgressIndicator(
                     color: Colors.blue.shade600,
                     strokeWidth: 2.5,
                   ),
-                )
-              : !_documentExists
-              ? _buildNoDataView()
-              : FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: CustomScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildDetailsCard(),
-                                const SizedBox(height: 20),
-                                _buildStatsCard(),
-                                const SizedBox(height: 20),
-                                _buildAiStudyHelperCard(),
-                                const SizedBox(height: 20),
-                                _buildSectionHeader(),
-                              ],
+                );
+              }
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: _documentExists
+                      ? FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: _buildMainScrollView(
+                              horizontalPadding: horizontalPadding,
+                              useGridForTopics: useGridForTopics,
                             ),
                           ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final entry = _topics.entries.elementAt(index);
-                              return _buildTopicCard(
-                                entry.key,
-                                entry.value,
-                                index + 1,
-                              );
-                            }, childCount: _topics.length),
+                        )
+                      : Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPadding,
+                            vertical: 24,
                           ),
+                          child: _buildNoDataView(),
                         ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      ],
-                    ),
-                  ),
                 ),
+              );
+            },
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMainScrollView({
+    required double horizontalPadding,
+    required bool useGridForTopics,
+  }) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              16,
+              horizontalPadding,
+              16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailsCard(),
+                const SizedBox(height: 20),
+                _buildStatsCard(),
+                const SizedBox(height: 20),
+                _buildAiStudyHelperCard(),
+                const SizedBox(height: 20),
+                _buildSectionHeader(),
+              ],
+            ),
+          ),
+        ),
+        if (useGridForTopics)
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            sliver: SliverGrid(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final entry = _topics.entries.elementAt(index);
+                  return _buildTopicCard(
+                    entry.key,
+                    entry.value,
+                    index + 1,
+                  );
+                },
+                childCount: _topics.length,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 3.2,
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final entry = _topics.entries.elementAt(index);
+                  return _buildTopicCard(
+                    entry.key,
+                    entry.value,
+                    index + 1,
+                  );
+                },
+                childCount: _topics.length,
+              ),
+            ),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+      ],
     );
   }
 
@@ -639,30 +717,63 @@ class _TopicsDetailPageState extends State<TopicsDetailPage>
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blue.shade100, width: 1),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem(
-            Icons.quiz_rounded,
-            'Total\nQuestions',
-            totalPapers.toString(),
-            Colors.blue.shade600,
-          ),
-          Container(height: 50, width: 1, color: Colors.grey.shade300),
-          _buildStatItem(
-            Icons.topic_rounded,
-            'Unique\nTopics',
-            totalTopics.toString(),
-            Colors.purple.shade600,
-          ),
-          Container(height: 50, width: 1, color: Colors.grey.shade300),
-          _buildStatItem(
-            Icons.trending_up_rounded,
-            'Max\nFrequency',
-            maxCount.toString(),
-            Colors.green.shade600,
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isNarrow = constraints.maxWidth < 360;
+          if (isNarrow) {
+            // Stack vertically on very small screens to avoid feeling cramped
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildStatItem(
+                  Icons.quiz_rounded,
+                  'Total\nQuestions',
+                  totalPapers.toString(),
+                  Colors.blue.shade600,
+                ),
+                const SizedBox(height: 12),
+                _buildStatItem(
+                  Icons.topic_rounded,
+                  'Unique\nTopics',
+                  totalTopics.toString(),
+                  Colors.purple.shade600,
+                ),
+                const SizedBox(height: 12),
+                _buildStatItem(
+                  Icons.trending_up_rounded,
+                  'Max\nFrequency',
+                  maxCount.toString(),
+                  Colors.green.shade600,
+                ),
+              ],
+            );
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                Icons.quiz_rounded,
+                'Total\nQuestions',
+                totalPapers.toString(),
+                Colors.blue.shade600,
+              ),
+              Container(height: 50, width: 1, color: Colors.grey.shade300),
+              _buildStatItem(
+                Icons.topic_rounded,
+                'Unique\nTopics',
+                totalTopics.toString(),
+                Colors.purple.shade600,
+              ),
+              Container(height: 50, width: 1, color: Colors.grey.shade300),
+              _buildStatItem(
+                Icons.trending_up_rounded,
+                'Max\nFrequency',
+                maxCount.toString(),
+                Colors.green.shade600,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -83,13 +83,13 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
     });
 
     try {
-      String documentPattern = '${_selectedCollege}_${_selectedBranch}_${_selectedSemester}_${_selectedSubject}_${_selectedExamType}'
-          .replaceAll(' ', '_')
-          .toLowerCase();
+      String documentPattern =
+          '${_selectedCollege}_${_selectedBranch}_${_selectedSemester}_${_selectedSubject}_${_selectedExamType}'
+              .replaceAll(' ', '_')
+              .toLowerCase();
 
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('questions')
-          .get();
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('questions').get();
 
       List<Map<String, dynamic>> papers = [];
 
@@ -111,8 +111,8 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
             }
           });
 
-          topics.sort((a, b) =>
-              (b['count'] as int).compareTo(a['count'] as int));
+          topics.sort(
+              (a, b) => (b['count'] as int).compareTo(a['count'] as int));
 
           papers.add({
             'documentId': docId,
@@ -173,7 +173,7 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
         title: FadeTransition(
           opacity: _headerController,
           child: Text(
@@ -222,77 +222,111 @@ class _TopicsSearchPageState extends State<TopicsSearchPage>
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: TopicsFilterCard(
-                      selectedCollege: _selectedCollege,
-                      selectedBranch: _selectedBranch,
-                      selectedSemester: _selectedSemester,
-                      selectedSubject: _selectedSubject,
-                      selectedExamType: _selectedExamType,
-                      onCollegeChanged: (value) {
-                        setState(() {
-                          _selectedCollege = value;
-                          _selectedBranch = null;
-                          _selectedSemester = null;
-                          _selectedSubject = null;
-                          _errorMessage = null;
-                          _showResults = false;
-                        });
-                      },
-                      onBranchChanged: (value) {
-                        setState(() {
-                          _selectedBranch = value;
-                          _selectedSemester = null;
-                          _selectedSubject = null;
-                          _errorMessage = null;
-                          _showResults = false;
-                        });
-                      },
-                      onSemesterChanged: (value) {
-                        setState(() {
-                          _selectedSemester = value;
-                          _selectedSubject = null;
-                          _errorMessage = null;
-                          _showResults = false;
-                        });
-                      },
-                      onSubjectChanged: (value) {
-                        setState(() {
-                          _selectedSubject = value;
-                          _errorMessage = null;
-                          _showResults = false;
-                        });
-                      },
-                      onExamTypeChanged: (value) {
-                        setState(() {
-                          _selectedExamType = value;
-                          _errorMessage = null;
-                          _showResults = false;
-                        });
-                      },
-                      onSearch: _searchTopics,
-                      canSearch: _canSearch,
-                      isLoading: _isLoading,
-                      errorMessage: _errorMessage,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+
+              // Relaxed breakpoint strategy
+              final bool isDesktop = width >= 1024;
+              final bool isTablet = width >= 600 && width < 1024;
+
+              final double maxContentWidth = isDesktop
+                  ? 900
+                  : isTablet
+                      ? 720
+                      : width;
+
+              final double horizontalPadding = isDesktop
+                  ? 32
+                  : isTablet
+                      ? 24
+                      : 16;
+              final double verticalPadding = isDesktop ? 24 : 16;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        verticalPadding,
+                        horizontalPadding,
+                        verticalPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: TopicsFilterCard(
+                              selectedCollege: _selectedCollege,
+                              selectedBranch: _selectedBranch,
+                              selectedSemester: _selectedSemester,
+                              selectedSubject: _selectedSubject,
+                              selectedExamType: _selectedExamType,
+                              onCollegeChanged: (value) {
+                                setState(() {
+                                  _selectedCollege = value;
+                                  _selectedBranch = null;
+                                  _selectedSemester = null;
+                                  _selectedSubject = null;
+                                  _errorMessage = null;
+                                  _showResults = false;
+                                });
+                              },
+                              onBranchChanged: (value) {
+                                setState(() {
+                                  _selectedBranch = value;
+                                  _selectedSemester = null;
+                                  _selectedSubject = null;
+                                  _errorMessage = null;
+                                  _showResults = false;
+                                });
+                              },
+                              onSemesterChanged: (value) {
+                                setState(() {
+                                  _selectedSemester = value;
+                                  _selectedSubject = null;
+                                  _errorMessage = null;
+                                  _showResults = false;
+                                });
+                              },
+                              onSubjectChanged: (value) {
+                                setState(() {
+                                  _selectedSubject = value;
+                                  _errorMessage = null;
+                                  _showResults = false;
+                                });
+                              },
+                              onExamTypeChanged: (value) {
+                                setState(() {
+                                  _selectedExamType = value;
+                                  _errorMessage = null;
+                                  _showResults = false;
+                                });
+                              },
+                              onSearch: _searchTopics,
+                              canSearch: _canSearch,
+                              isLoading: _isLoading,
+                              errorMessage: _errorMessage,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          if (_showResults && _questionPapers.isNotEmpty)
+                            _buildResultsSection(context)
+                          else if (!_showResults)
+                            _buildInfoSection(context),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  if (_showResults && _questionPapers.isNotEmpty)
-                    _buildResultsSection(context)
-                  else if (!_showResults)
-                    _buildInfoSection(context),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -743,45 +777,7 @@ class TopicsFilterCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            ModernDropdown(
-              label: 'College',
-              icon: Icons.school_rounded,
-              value: selectedCollege,
-              items: collegeData.keys.toList(),
-              onChanged: onCollegeChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Branch',
-              icon: Icons.account_tree_rounded,
-              value: selectedBranch,
-              items: branches,
-              onChanged: onBranchChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Semester',
-              icon: Icons.calendar_today_rounded,
-              value: selectedSemester,
-              items: semesters,
-              onChanged: onSemesterChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Subject',
-              icon: Icons.book_rounded,
-              value: selectedSubject,
-              items: subjects,
-              onChanged: onSubjectChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Exam Type',
-              icon: Icons.assignment_rounded,
-              value: selectedExamType,
-              items: examTypes,
-              onChanged: onExamTypeChanged,
-            ),
+            _buildResponsiveFilters(context, branches, subjects),
             if (errorMessage != null) ...[
               const SizedBox(height: 16),
               Container(
@@ -826,6 +822,126 @@ class TopicsFilterCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Responsive filter layout: stacked on mobile, 2-column grid on wider screens
+  Widget _buildResponsiveFilters(
+    BuildContext context,
+    List<String> branches,
+    List<String> subjects,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= 700;
+
+        if (!isWide) {
+          // Mobile / narrow: relaxed single column
+          return Column(
+            children: [
+              ModernDropdown(
+                label: 'College',
+                icon: Icons.school_rounded,
+                value: selectedCollege,
+                items: collegeData.keys.toList(),
+                onChanged: onCollegeChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Branch',
+                icon: Icons.account_tree_rounded,
+                value: selectedBranch,
+                items: branches,
+                onChanged: onBranchChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Semester',
+                icon: Icons.calendar_today_rounded,
+                value: selectedSemester,
+                items: semesters,
+                onChanged: onSemesterChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Subject',
+                icon: Icons.book_rounded,
+                value: selectedSubject,
+                items: subjects,
+                onChanged: onSubjectChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Exam Type',
+                icon: Icons.assignment_rounded,
+                value: selectedExamType,
+                items: examTypes,
+                onChanged: onExamTypeChanged,
+              ),
+            ],
+          );
+        }
+
+        // Tablet / desktop: two-column layout for a calmer, modern look
+        final double fieldWidth = (constraints.maxWidth - 12) / 2;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'College',
+                icon: Icons.school_rounded,
+                value: selectedCollege,
+                items: collegeData.keys.toList(),
+                onChanged: onCollegeChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Branch',
+                icon: Icons.account_tree_rounded,
+                value: selectedBranch,
+                items: branches,
+                onChanged: onBranchChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Semester',
+                icon: Icons.calendar_today_rounded,
+                value: selectedSemester,
+                items: semesters,
+                onChanged: onSemesterChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Subject',
+                icon: Icons.book_rounded,
+                value: selectedSubject,
+                items: subjects,
+                onChanged: onSubjectChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Exam Type',
+                icon: Icons.assignment_rounded,
+                value: selectedExamType,
+                items: examTypes,
+                onChanged: onExamTypeChanged,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

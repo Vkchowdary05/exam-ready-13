@@ -98,11 +98,11 @@ class _QuestionPaperSubmissionPageState
     setState(() {
       isFormValid =
           selectedImage != null &&
-          selectedCollege != null &&
-          selectedBranch != null &&
-          selectedSemester != null &&
-          selectedSubject != null &&
-          selectedExamType != null;
+              selectedCollege != null &&
+              selectedBranch != null &&
+              selectedSemester != null &&
+              selectedSubject != null &&
+              selectedExamType != null;
     });
   }
 
@@ -521,20 +521,19 @@ class _QuestionPaperSubmissionPageState
 
       _showSnackBar('Saving to database...', isInfo: true);
       final String docId = await _firestoreService
-    .submitToSubmittedPapers(
-      college: selectedCollege!,
-      branch: selectedBranch!,
-      semester: selectedSemester!,
-      subject: selectedSubject!,
-      examType: selectedExamType!,
-      imageUrl: imageUrl,
-      // no userId needed – service handles it
-    )
-    .timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw TimeoutException('Database save timed out'),
-    );
-
+          .submitToSubmittedPapers(
+        college: selectedCollege!,
+        branch: selectedBranch!,
+        semester: selectedSemester!,
+        subject: selectedSubject!,
+        examType: selectedExamType!,
+        imageUrl: imageUrl,
+        // no userId needed – service handles it
+      )
+          .timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('Database save timed out'),
+      );
 
       developer.log(
         'Submission successful. Firestore Document ID: $docId',
@@ -568,17 +567,17 @@ class _QuestionPaperSubmissionPageState
 
       await _firestoreService
           .submitToQuestionPapers(
-            college: selectedCollege!,
-            branch: selectedBranch!,
-            semester: selectedSemester!,
-            subject: selectedSubject!,
-            examType: selectedExamType!,
-            topics: topics,
-          )
+        college: selectedCollege!,
+        branch: selectedBranch!,
+        semester: selectedSemester!,
+        subject: selectedSubject!,
+        examType: selectedExamType!,
+        topics: topics,
+      )
           .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw TimeoutException('Database save timed out'),
-          );
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('Database save timed out'),
+      );
 
       _showSnackBar('Updating topic frequency...', isInfo: true);
 
@@ -873,8 +872,8 @@ class _QuestionPaperSubmissionPageState
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.info_outline_rounded,
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.info_outline_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -893,8 +892,8 @@ class _QuestionPaperSubmissionPageState
         backgroundColor: isError
             ? errorColor
             : isSuccess
-            ? successColor
-            : primaryColor,
+                ? successColor
+                : primaryColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -912,94 +911,56 @@ class _QuestionPaperSubmissionPageState
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: Column(
-              children: [
-                _buildAppBar(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 600),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildImageUploadCard(),
-                            const SizedBox(height: 40),
-                            Text(
-                              'Paper Details',
-                              style: GoogleFonts.inter(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            _buildDropdown(
-                              label: 'College',
-                              value: selectedCollege,
-                              items: collegeData.keys.toList(),
-                              icon: Icons.school_outlined,
-                              color: primaryColor,
-                              onChanged: _handleCollegeChange,
-                            ),
-                            _buildDropdown(
-                              label: 'Branch',
-                              value: selectedBranch,
-                              items: availableBranches,
-                              icon: Icons.account_tree_outlined,
-                              color: const Color(0xFF10B981),
-                              enabled: selectedCollege != null,
-                              onChanged: _handleBranchChange,
-                            ),
-                            _buildDropdown(
-                              label: 'Semester',
-                              value: selectedSemester,
-                              items: semesters,
-                              icon: Icons.calendar_month_outlined,
-                              color: const Color(0xFFF59E0B),
-                              enabled: selectedBranch != null,
-                              onChanged: _handleSemesterChange,
-                            ),
-                            _buildDropdown(
-                              label: 'Subject',
-                              value: selectedSubject,
-                              items: availableSubjects,
-                              icon: Icons.menu_book_outlined,
-                              color: const Color(0xFFEC4899),
-                              enabled: selectedSemester != null,
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedSubject = value;
-                                  _validateForm();
-                                });
-                              },
-                            ),
-                            _buildDropdown(
-                              label: 'Exam Type',
-                              value: selectedExamType,
-                              items: examTypes,
-                              icon: Icons.assignment_outlined,
-                              color: const Color(0xFF8B5CF6),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedExamType = value;
-                                  _validateForm();
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 32),
-                            _buildSubmitButton(),
-                            const SizedBox(height: 20),
-                          ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double width = constraints.maxWidth;
+                final bool isWide = width >= 900;
+                final double maxContentWidth =
+                    isWide ? 1100 : 600; // desktop/tablet vs mobile
+
+                return Column(
+                  children: [
+                    _buildAppBar(isWide: isWide, maxContentWidth: maxContentWidth),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(maxWidth: maxContentWidth),
+                            child: isWide
+                                ? Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: _buildImageUploadCard(),
+                                      ),
+                                      const SizedBox(width: 32),
+                                      Expanded(
+                                        flex: 1,
+                                        child: _buildFormSection(),
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildImageUploadCard(),
+                                      const SizedBox(height: 40),
+                                      _buildFormSection(),
+                                    ],
+                                  ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -1007,7 +968,85 @@ class _QuestionPaperSubmissionPageState
     );
   }
 
-  Widget _buildAppBar() {
+  /// Right-side form section (used in both single column and two-column layouts)
+  Widget _buildFormSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Paper Details',
+          style: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildDropdown(
+          label: 'College',
+          value: selectedCollege,
+          items: collegeData.keys.toList(),
+          icon: Icons.school_outlined,
+          color: primaryColor,
+          onChanged: _handleCollegeChange,
+        ),
+        _buildDropdown(
+          label: 'Branch',
+          value: selectedBranch,
+          items: availableBranches,
+          icon: Icons.account_tree_outlined,
+          color: const Color(0xFF10B981),
+          enabled: selectedCollege != null,
+          onChanged: _handleBranchChange,
+        ),
+        _buildDropdown(
+          label: 'Semester',
+          value: selectedSemester,
+          items: semesters,
+          icon: Icons.calendar_month_outlined,
+          color: const Color(0xFFF59E0B),
+          enabled: selectedBranch != null,
+          onChanged: _handleSemesterChange,
+        ),
+        _buildDropdown(
+          label: 'Subject',
+          value: selectedSubject,
+          items: availableSubjects,
+          icon: Icons.menu_book_outlined,
+          color: const Color(0xFFEC4899),
+          enabled: selectedSemester != null,
+          onChanged: (value) {
+            setState(() {
+              selectedSubject = value;
+              _validateForm();
+            });
+          },
+        ),
+        _buildDropdown(
+          label: 'Exam Type',
+          value: selectedExamType,
+          items: examTypes,
+          icon: Icons.assignment_outlined,
+          color: const Color(0xFF8B5CF6),
+          onChanged: (value) {
+            setState(() {
+              selectedExamType = value;
+              _validateForm();
+            });
+          },
+        ),
+        const SizedBox(height: 32),
+        _buildSubmitButton(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildAppBar({
+    required bool isWide,
+    required double maxContentWidth,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1020,50 +1059,55 @@ class _QuestionPaperSubmissionPageState
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor, width: 1),
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: textPrimary,
-                size: 22,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Submit Paper',
-                  style: GoogleFonts.inter(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxContentWidth),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
                     color: textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.8,
+                    size: 22,
                   ),
+                  onPressed: () => Navigator.pop(context),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'AI-powered topic extraction',
-                  style: GoogleFonts.inter(
-                    color: textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Submit Paper',
+                      style: GoogleFonts.inter(
+                        color: textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'AI-powered topic extraction',
+                      style: GoogleFonts.inter(
+                        color: textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1116,8 +1160,8 @@ class _QuestionPaperSubmissionPageState
                     isCompressing
                         ? 'Compressing Image'
                         : isExtractingText
-                        ? 'Extracting Text'
-                        : 'Analyzing Topics',
+                            ? 'Extracting Text'
+                            : 'Analyzing Topics',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1130,8 +1174,8 @@ class _QuestionPaperSubmissionPageState
                     isCompressing
                         ? 'Optimizing your image'
                         : isExtractingText
-                        ? 'Reading text from the paper'
-                        : 'AI is extracting topics',
+                            ? 'Reading text from the paper'
+                            : 'AI is extracting topics',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: textSecondary,
@@ -1140,151 +1184,151 @@ class _QuestionPaperSubmissionPageState
                 ],
               )
             : selectedImage == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 48,
-                      color: primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Upload Question Paper',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap to select from gallery or camera',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: primaryColor.withOpacity(0.15),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      'AI Topic Extraction • Auto Compress',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.file(
-                      selectedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                  ),
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedImage = null;
-                          extractedText = '';
-                          extractedTopics = [];
-                          _validateForm();
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: errorColor,
+                          color: primaryColor.withOpacity(0.1),
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: errorColor.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                        ),
+                        child: Icon(
+                          Icons.cloud_upload_outlined,
+                          size: 48,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Upload Question Paper',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap to select from gallery or camera',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: primaryColor.withOpacity(0.15),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'AI Topic Extraction • Auto Compress',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.file(
+                          selectedImage!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                      ),
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedImage = null;
+                              extractedText = '';
+                              extractedTopics = [];
+                              _validateForm();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: errorColor,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: errorColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: successColor,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: successColor.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Image Selected (${(selectedImage!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)}MB)',
-                            style: GoogleFonts.inter(
+                            child: const Icon(
+                              Icons.close_rounded,
                               color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              size: 20,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: successColor,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: successColor.withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Image Selected (${(selectedImage!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)}MB)',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
       ),
     );
   }

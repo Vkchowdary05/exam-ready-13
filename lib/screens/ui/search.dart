@@ -17,22 +17,21 @@ import 'package:exam_ready/riverpod/question_paper_provider.dart';
 final searchRepositoryProvider = Provider((ref) => SearchRepository());
 
 final searchResultsProvider =
-    StreamProvider.family<List<QuestionPaper>, Map<String, String?>>((
-      ref,
-      filters,
-    ) {
-      final searchRepository = ref.watch(searchRepositoryProvider);
-      return searchRepository.searchExamPapers(
-        college: filters['college'],
-        branch: filters['branch'],
-        semester: filters['semester'],
-        subject: filters['subject'],
-        examType: filters['examType'],
-      );
-    });
+    StreamProvider.family<List<QuestionPaper>, Map<String, String?>>(
+  (ref, filters) {
+    final searchRepository = ref.watch(searchRepositoryProvider);
+    return searchRepository.searchExamPapers(
+      college: filters['college'],
+      branch: filters['branch'],
+      semester: filters['semester'],
+      subject: filters['subject'],
+      examType: filters['examType'],
+    );
+  },
+);
 
 // ============================================================================
-// PAPER DETAILS PAGE (ENHANCED)
+// PAPER DETAILS PAGE (ENHANCED & RESPONSIVE)
 // ============================================================================
 
 class PaperDetailsPage extends ConsumerStatefulWidget {
@@ -303,6 +302,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
   }
 
   bool _checkDeletePermission(QuestionPaper paper) {
+    // Hook for permission logic; currently always true
     return true;
   }
 
@@ -324,7 +324,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
                     value: event == null
                         ? null
                         : event.cumulativeBytesLoaded /
-                              (event.expectedTotalBytes ?? 1),
+                            (event.expectedTotalBytes ?? 1),
                     color: Colors.blue.shade400,
                   ),
                 ),
@@ -609,8 +609,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.info_outline_rounded,
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.info_outline_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -630,8 +630,8 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
         backgroundColor: isError
             ? Colors.red.shade600
             : isSuccess
-            ? Colors.green.shade600
-            : Colors.blue.shade600,
+                ? Colors.green.shade600
+                : Colors.blue.shade600,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -680,22 +680,36 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
       ),
       child: FadeTransition(
         opacity: _fadeAnimation,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildAppBar(paper),
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  _buildImageSection(paper),
-                  _buildInfoSection(paper),
-                  _buildActionButtons(paper),
-                  const SizedBox(height: 40),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double width = constraints.maxWidth;
+            final bool isWide = width >= 900;
+            final double maxContentWidth = isWide ? 900 : width;
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    _buildAppBar(paper),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          _buildImageSection(paper, isWide: isWide),
+                          _buildInfoSection(paper),
+                          _buildActionButtons(paper),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -748,13 +762,15 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
     );
   }
 
-  Widget _buildImageSection(QuestionPaper paper) {
+  Widget _buildImageSection(QuestionPaper paper, {required bool isWide}) {
+    final double horizontalMargin = isWide ? 32 : 20;
+
     return Hero(
       tag: 'paper_${paper.id}',
       child: GestureDetector(
         onTap: () => _showFullScreenImage(paper.imageUrl),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
+          margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -769,7 +785,7 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: AspectRatio(
-              aspectRatio: 3 / 4,
+              aspectRatio: isWide ? 16 / 9 : 3 / 4,
               child: Stack(
                 children: [
                   Image.network(
@@ -898,16 +914,13 @@ class _PaperDetailsPageState extends ConsumerState<PaperDetailsPage>
             icon: Icons.access_time_rounded,
             label: 'Upload Date',
             value: DateFormat('MMM dd, yyyy').format(paper.uploadedAt),
-            
-          ),_buildDetailRow(
+          ),
+          _buildDetailRow(
             icon: Icons.person_rounded,
             label: 'Paper By',
-            value: (paper.userName != null && paper.userName!.trim().isNotEmpty)
-                ? paper.userName!
-                : '',
-                isLast: true,
+            value: paper.userName ?? '',
+            isLast: true,
           ),
-          
         ],
       ),
     );
@@ -1075,6 +1088,7 @@ class _PaperCardState extends State<PaperCard>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
@@ -1278,8 +1292,9 @@ class _PaperCardState extends State<PaperCard>
 }
 
 // ============================================================================
-// FILTER CARD WIDGET
+// FILTER CARD WIDGET (RESPONSIVE)
 // ============================================================================
+
 class FilterCard extends StatelessWidget {
   final String? selectedCollege;
   final String? selectedBranch;
@@ -1292,6 +1307,7 @@ class FilterCard extends StatelessWidget {
   final ValueChanged<String?> onSubjectChanged;
   final ValueChanged<String?> onExamTypeChanged;
   final VoidCallback onSearch;
+
   const FilterCard({
     super.key,
     required this.selectedCollege,
@@ -1306,6 +1322,7 @@ class FilterCard extends StatelessWidget {
     required this.onExamTypeChanged,
     required this.onSearch,
   });
+
   @override
   Widget build(BuildContext context) {
     final branches = selectedCollege != null
@@ -1362,45 +1379,7 @@ class FilterCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            ModernDropdown(
-              label: 'College',
-              icon: Icons.school_rounded,
-              value: selectedCollege,
-              items: collegeData.keys.toList(),
-              onChanged: onCollegeChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Branch',
-              icon: Icons.account_tree_rounded,
-              value: selectedBranch,
-              items: branches,
-              onChanged: onBranchChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Semester',
-              icon: Icons.calendar_today_rounded,
-              value: selectedSemester,
-              items: semesters,
-              onChanged: onSemesterChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Subject',
-              icon: Icons.book_rounded,
-              value: selectedSubject,
-              items: subjects,
-              onChanged: onSubjectChanged,
-            ),
-            const SizedBox(height: 12),
-            ModernDropdown(
-              label: 'Exam Type',
-              icon: Icons.assignment_rounded,
-              value: selectedExamType,
-              items: examTypes,
-              onChanged: onExamTypeChanged,
-            ),
+            _buildResponsiveFilters(context, branches, subjects),
             const SizedBox(height: 20),
             SearchButton(isLoading: false, onPressed: onSearch),
           ],
@@ -1408,17 +1387,138 @@ class FilterCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildResponsiveFilters(
+    BuildContext context,
+    List<String> branches,
+    List<String> subjects,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= 700;
+
+        if (!isWide) {
+          // Mobile / narrow layout
+          return Column(
+            children: [
+              ModernDropdown(
+                label: 'College',
+                icon: Icons.school_rounded,
+                value: selectedCollege,
+                items: collegeData.keys.toList(),
+                onChanged: onCollegeChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Branch',
+                icon: Icons.account_tree_rounded,
+                value: selectedBranch,
+                items: branches,
+                onChanged: onBranchChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Semester',
+                icon: Icons.calendar_today_rounded,
+                value: selectedSemester,
+                items: semesters,
+                onChanged: onSemesterChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Subject',
+                icon: Icons.book_rounded,
+                value: selectedSubject,
+                items: subjects,
+                onChanged: onSubjectChanged,
+              ),
+              const SizedBox(height: 12),
+              ModernDropdown(
+                label: 'Exam Type',
+                icon: Icons.assignment_rounded,
+                value: selectedExamType,
+                items: examTypes,
+                onChanged: onExamTypeChanged,
+              ),
+            ],
+          );
+        }
+
+        // Tablet / desktop: two-column grid
+        final double fieldWidth = (constraints.maxWidth - 12) / 2;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'College',
+                icon: Icons.school_rounded,
+                value: selectedCollege,
+                items: collegeData.keys.toList(),
+                onChanged: onCollegeChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Branch',
+                icon: Icons.account_tree_rounded,
+                value: selectedBranch,
+                items: branches,
+                onChanged: onBranchChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Semester',
+                icon: Icons.calendar_today_rounded,
+                value: selectedSemester,
+                items: semesters,
+                onChanged: onSemesterChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Subject',
+                icon: Icons.book_rounded,
+                value: selectedSubject,
+                items: subjects,
+                onChanged: onSubjectChanged,
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: ModernDropdown(
+                label: 'Exam Type',
+                icon: Icons.assignment_rounded,
+                value: selectedExamType,
+                items: examTypes,
+                onChanged: onExamTypeChanged,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 // ============================================================================
 // MODERN DROPDOWN WIDGET
 // ============================================================================
+
 class ModernDropdown extends StatelessWidget {
   final String label;
   final IconData icon;
   final String? value;
   final List<String> items;
   final ValueChanged<String?>? onChanged;
+
   const ModernDropdown({
     super.key,
     required this.label,
@@ -1427,6 +1527,7 @@ class ModernDropdown extends StatelessWidget {
     required this.items,
     required this.onChanged,
   });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1485,14 +1586,17 @@ class ModernDropdown extends StatelessWidget {
 // ============================================================================
 // SEARCH BUTTON WIDGET
 // ============================================================================
+
 class SearchButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
+
   const SearchButton({
     super.key,
     required this.isLoading,
     required this.onPressed,
   });
+
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
@@ -1550,8 +1654,13 @@ class SearchButton extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// MAIN SEARCH PAGE (RESPONSIVE)
+// ============================================================================
+
 class SearchQuestionPaperPage extends ConsumerStatefulWidget {
   const SearchQuestionPaperPage({super.key});
+
   @override
   ConsumerState<SearchQuestionPaperPage> createState() =>
       _SearchQuestionPaperPageState();
@@ -1563,17 +1672,20 @@ class _SearchQuestionPaperPageState
   late AnimationController _headerController;
   late AnimationController _filterPanelController;
   late Animation<Offset> _slideAnimation;
+
   String? _selectedCollege;
   String? _selectedBranch;
   String? _selectedSemester;
   String? _selectedSubject;
   String? _selectedExamType;
+
   final ScrollController _scrollController = ScrollController();
   List<QuestionPaper> _papers = [];
   DocumentSnapshot? _lastDocument;
   bool _isLoadingMore = false;
   bool _hasMore = true;
   StreamSubscription<List<QuestionPaper>>? _searchSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -1588,11 +1700,11 @@ class _SearchQuestionPaperPageState
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _filterPanelController,
-            curve: Curves.easeOut,
-          ),
-        );
+      CurvedAnimation(
+        parent: _filterPanelController,
+        curve: Curves.easeOut,
+      ),
+    );
 
     _scrollController.addListener(_onScroll);
     _fetchInitialData();
@@ -1647,10 +1759,10 @@ class _SearchQuestionPaperPageState
                 .doc(newPapers.last.id)
                 .get()
                 .then((doc) {
-                  if (mounted) {
-                    _lastDocument = doc;
-                  }
-                });
+              if (mounted) {
+                _lastDocument = doc;
+              }
+            });
           }
 
           setState(() {
@@ -1749,168 +1861,220 @@ class _SearchQuestionPaperPageState
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                    child: FilterCard(
-                      selectedCollege: _selectedCollege,
-                      selectedBranch: _selectedBranch,
-                      selectedSemester: _selectedSemester,
-                      selectedSubject: _selectedSubject,
-                      selectedExamType: _selectedExamType,
-                      onCollegeChanged: (value) {
-                        setState(() {
-                          _selectedCollege = value;
-                          _selectedBranch = null;
-                          _selectedSemester = null;
-                          _selectedSubject = null;
-                        });
-                      },
-                      onBranchChanged: (value) {
-                        setState(() {
-                          _selectedBranch = value;
-                          _selectedSemester = null;
-                          _selectedSubject = null;
-                        });
-                      },
-                      onSemesterChanged: (value) {
-                        setState(() {
-                          _selectedSemester = value;
-                          _selectedSubject = null;
-                        });
-                      },
-                      onSubjectChanged: (value) {
-                        setState(() {
-                          _selectedSubject = value;
-                        });
-                      },
-                      onExamTypeChanged: (value) {
-                        setState(() {
-                          _selectedExamType = value;
-                        });
-                      },
-                      onSearch: _onFiltersChanged,
-                    ),
-                  ),
-                ),
-              ),
-              if (_papers.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Results',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade800,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${_papers.length}',
-                            style: TextStyle(
-                              color: Colors.blue.shade700,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              letterSpacing: 0.2,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              final bool isDesktop = width >= 1100;
+              final bool isTablet = width >= 700 && width < 1100;
+
+              final double maxContentWidth = isDesktop
+                  ? 1100
+                  : isTablet
+                      ? 900
+                      : width;
+
+              final bool useGrid = isTablet || isDesktop;
+              final int gridCrossAxisCount = isDesktop ? 3 : 2;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                            child: FilterCard(
+                              selectedCollege: _selectedCollege,
+                              selectedBranch: _selectedBranch,
+                              selectedSemester: _selectedSemester,
+                              selectedSubject: _selectedSubject,
+                              selectedExamType: _selectedExamType,
+                              onCollegeChanged: (value) {
+                                setState(() {
+                                  _selectedCollege = value;
+                                  _selectedBranch = null;
+                                  _selectedSemester = null;
+                                  _selectedSubject = null;
+                                });
+                              },
+                              onBranchChanged: (value) {
+                                setState(() {
+                                  _selectedBranch = value;
+                                  _selectedSemester = null;
+                                  _selectedSubject = null;
+                                });
+                              },
+                              onSemesterChanged: (value) {
+                                setState(() {
+                                  _selectedSemester = value;
+                                  _selectedSubject = null;
+                                });
+                              },
+                              onSubjectChanged: (value) {
+                                setState(() {
+                                  _selectedSubject = value;
+                                });
+                              },
+                              onExamTypeChanged: (value) {
+                                setState(() {
+                                  _selectedExamType = value;
+                                });
+                              },
+                              onSearch: _onFiltersChanged,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final paper = _papers[index];
-                      return PaperCard(paper: paper, index: index);
-                    }, childCount: _papers.length),
-                  ),
-                ),
-                if (_isLoadingMore)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.blue.shade600,
-                          strokeWidth: 2.5,
-                        ),
                       ),
-                    ),
-                  ),
-              ] else if (_isLoadingMore)
-                SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.blue.shade600,
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                )
-              else
-                SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.search_rounded,
-                            size: 64,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'No papers found',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Try different filter combinations',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade500,
-                            letterSpacing: 0.2,
+                      if (_papers.isNotEmpty) ...[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Results',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${_papers.length}',
+                                    style: TextStyle(
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                        SliverPadding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: useGrid
+                              ? SliverGrid(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      final paper = _papers[index];
+                                      return PaperCard(
+                                        paper: paper,
+                                        index: index,
+                                      );
+                                    },
+                                    childCount: _papers.length,
+                                  ),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: gridCrossAxisCount,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                    childAspectRatio: 0.85,
+                                  ),
+                                )
+                              : SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      final paper = _papers[index];
+                                      return PaperCard(
+                                        paper: paper,
+                                        index: index,
+                                      );
+                                    },
+                                    childCount: _papers.length,
+                                  ),
+                                ),
+                        ),
+                        if (_isLoadingMore)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.blue.shade600,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ] else if (_isLoadingMore)
+                        SliverFillRemaining(
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.blue.shade600,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        )
+                      else
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.search_rounded,
+                                    size: 64,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'No papers found',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Try different filter combinations',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade500,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-            ],
+              );
+            },
           ),
         ),
       ),

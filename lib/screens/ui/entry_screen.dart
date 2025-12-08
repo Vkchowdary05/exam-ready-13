@@ -93,54 +93,85 @@ class _EntryScreenState extends State<EntryScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 32),
-                _buildAuthButtons(),
-                const SizedBox(height: 48),
-                _buildSectionTitle('Platform Overview'),
-                const SizedBox(height: 20),
-                _buildStatsSection(),
-                const SizedBox(height: 48),
-                _buildPopularSection(
-                  'Popular Colleges',
-                  popularColleges,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isMobile = screenWidth < 600;
+            final isTablet = screenWidth >= 600 && screenWidth < 1024;
+            final isDesktop = screenWidth >= 1024;
+
+            final horizontalPadding = isMobile ? 24.0 : (isTablet ? 40.0 : 0.0);
+            final maxWidth = isDesktop ? 1200.0 : double.infinity;
+
+            return Center(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 60.0 : horizontalPadding,
+                      vertical: isMobile ? 20 : (isTablet ? 32 : 40),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(isMobile, isTablet, isDesktop),
+                        SizedBox(height: isMobile ? 32 : (isTablet ? 40 : 48)),
+                        _buildAuthButtons(isMobile, isTablet, isDesktop),
+                        SizedBox(height: isMobile ? 48 : (isTablet ? 56 : 64)),
+                        _buildSectionTitle('Platform Overview', isMobile, isTablet),
+                        SizedBox(height: isMobile ? 20 : (isTablet ? 24 : 28)),
+                        _buildStatsSection(isMobile, isTablet, isDesktop),
+                        SizedBox(height: isMobile ? 48 : (isTablet ? 56 : 64)),
+                        _buildPopularSection(
+                          'Popular Colleges',
+                          popularColleges,
+                          isMobile,
+                          isTablet,
+                          isDesktop,
+                        ),
+                        SizedBox(height: isMobile ? 48 : (isTablet ? 56 : 64)),
+                        _buildPopularSection(
+                          'Popular Departments',
+                          popularDepartments,
+                          isMobile,
+                          isTablet,
+                          isDesktop,
+                        ),
+                        SizedBox(height: isMobile ? 32 : (isTablet ? 40 : 48)),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 48),
-                _buildPopularSection(
-                  'Popular Departments',
-                  popularDepartments,
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile, bool isTablet, bool isDesktop) {
+    final fontSize = isMobile ? 26.0 : (isTablet ? 30.0 : 34.0);
+    final subtitleSize = isMobile ? 14.0 : (isTablet ? 15.0 : 16.0);
+    final iconSize = isMobile ? 32.0 : (isTablet ? 36.0 : 40.0);
+    final padding = isMobile ? 28.0 : (isTablet ? 32.0 : 36.0);
+
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         gradient: AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.accentColor.withOpacity(0.08),
+            color: Color.fromARGB(20, 255, 101, 132),
             blurRadius: 24,
             offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: AppTheme.accentColor.withOpacity(0.04),
+            color: Color.fromARGB(10, 255, 101, 132),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -150,22 +181,22 @@ class _EntryScreenState extends State<EntryScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(isMobile ? 14.0 : (isTablet ? 16.0 : 18.0)),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Color.fromARGB(51, 255, 255, 255),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Color.fromARGB(25, 255, 255, 255),
                 width: 1,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school_outlined,
-              size: 32,
+              size: iconSize,
               color: Colors.white,
             ),
           ),
-          const SizedBox(width: 20),
+          SizedBox(width: isMobile ? 20 : (isTablet ? 24 : 28)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +205,7 @@ class _EntryScreenState extends State<EntryScreen> {
                   'Exam Ready',
                   style: AppTheme.headingStyle.copyWith(
                     color: Colors.white,
-                    fontSize: 26,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.7,
                   ),
@@ -183,8 +214,8 @@ class _EntryScreenState extends State<EntryScreen> {
                 Text(
                   'Your Ultimate Exam Companion',
                   style: AppTheme.subheadingStyle.copyWith(
-                    color: Colors.white.withOpacity(0.92),
-                    fontSize: 14,
+                    color: Color.fromARGB(235, 255, 255, 255),
+                    fontSize: subtitleSize,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -199,15 +230,37 @@ class _EntryScreenState extends State<EntryScreen> {
         .slideY(begin: -0.15, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildAuthButtons() {
+  Widget _buildAuthButtons(bool isMobile, bool isTablet, bool isDesktop) {
+    if (isDesktop) {
+      return Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildLoginButton(isMobile, isTablet, isDesktop),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: _buildSignUpButton(isMobile, isTablet, isDesktop),
+              ),
+            ],
+          ),
+        ),
+      )
+          .animate()
+          .fadeIn(duration: 600.ms, delay: 200.ms, curve: Curves.easeOut)
+          .slideY(begin: 0.1, end: 0, duration: 600.ms, delay: 200.ms, curve: Curves.easeOutCubic);
+    }
+
     return Row(
       children: [
         Expanded(
-          child: _buildLoginButton(),
+          child: _buildLoginButton(isMobile, isTablet, isDesktop),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: isMobile ? 16 : 20),
         Expanded(
-          child: _buildSignUpButton(),
+          child: _buildSignUpButton(isMobile, isTablet, isDesktop),
         ),
       ],
     )
@@ -216,7 +269,11 @@ class _EntryScreenState extends State<EntryScreen> {
         .slideY(begin: 0.1, end: 0, duration: 600.ms, delay: 200.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildLoginButton(bool isMobile, bool isTablet, bool isDesktop) {
+    final verticalPadding = isMobile ? 18.0 : (isTablet ? 20.0 : 22.0);
+    final fontSize = isMobile ? 16.0 : (isTablet ? 17.0 : 18.0);
+    final iconSize = isMobile ? 20.0 : (isTablet ? 22.0 : 24.0);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -232,7 +289,7 @@ class _EntryScreenState extends State<EntryScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.accentColor.withOpacity(0.12),
+                color: Color.fromARGB(31, 255, 101, 132),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
                 spreadRadius: 0,
@@ -240,20 +297,20 @@ class _EntryScreenState extends State<EntryScreen> {
             ],
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: EdgeInsets.symmetric(vertical: verticalPadding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.login_rounded,
                   color: Colors.white,
-                  size: 20,
+                  size: iconSize,
                 ),
                 const SizedBox(width: 10),
                 Text(
                   'Login',
                   style: AppTheme.buttonTextStyle.copyWith(
-                    fontSize: 16,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -265,7 +322,11 @@ class _EntryScreenState extends State<EntryScreen> {
     );
   }
 
-  Widget _buildSignUpButton() {
+  Widget _buildSignUpButton(bool isMobile, bool isTablet, bool isDesktop) {
+    final verticalPadding = isMobile ? 18.0 : (isTablet ? 20.0 : 22.0);
+    final fontSize = isMobile ? 16.0 : (isTablet ? 17.0 : 18.0);
+    final iconSize = isMobile ? 20.0 : (isTablet ? 22.0 : 24.0);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -276,17 +337,17 @@ class _EntryScreenState extends State<EntryScreen> {
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: EdgeInsets.symmetric(vertical: verticalPadding),
           decoration: BoxDecoration(
             color: AppTheme.cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.borderColor.withOpacity(0.6),
+              color: Color.fromARGB(153, 230, 233, 242),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Color.fromARGB(8, 0, 0, 0),
                 blurRadius: 12,
                 offset: const Offset(0, 3),
                 spreadRadius: 0,
@@ -299,14 +360,14 @@ class _EntryScreenState extends State<EntryScreen> {
               Icon(
                 Icons.person_add_outlined,
                 color: AppTheme.textPrimary,
-                size: 20,
+                size: iconSize,
               ),
               const SizedBox(width: 10),
               Text(
                 'Sign Up',
                 style: AppTheme.buttonTextStyle.copyWith(
                   color: AppTheme.textPrimary,
-                  fontSize: 16,
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -317,11 +378,13 @@ class _EntryScreenState extends State<EntryScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, bool isMobile, bool isTablet) {
+    final fontSize = isMobile ? 22.0 : (isTablet ? 24.0 : 26.0);
+
     return Text(
       title,
       style: AppTheme.headingStyle.copyWith(
-        fontSize: 22,
+        fontSize: fontSize,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.6,
       ),
@@ -331,15 +394,20 @@ class _EntryScreenState extends State<EntryScreen> {
         .slideX(begin: -0.08, end: 0, duration: 500.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(bool isMobile, bool isTablet, bool isDesktop) {
+    final crossAxisCount = isMobile ? 2 : (isTablet ? 3 : 4);
+    final crossAxisSpacing = isMobile ? 16.0 : (isTablet ? 20.0 : 24.0);
+    final mainAxisSpacing = isMobile ? 16.0 : (isTablet ? 20.0 : 24.0);
+    final childAspectRatio = isMobile ? 1.45 : (isTablet ? 1.4 : 1.35);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.45,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: crossAxisSpacing,
+        mainAxisSpacing: mainAxisSpacing,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: stats.length,
       itemBuilder: (context, index) {
@@ -353,14 +421,22 @@ class _EntryScreenState extends State<EntryScreen> {
     );
   }
 
-  Widget _buildPopularSection(String title, List<Map<String, dynamic>> items) {
+  Widget _buildPopularSection(
+    String title,
+    List<Map<String, dynamic>> items,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
+    final fontSize = isMobile ? 22.0 : (isTablet ? 24.0 : 26.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: AppTheme.headingStyle.copyWith(
-            fontSize: 22,
+            fontSize: fontSize,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.6,
           ),
@@ -368,36 +444,79 @@ class _EntryScreenState extends State<EntryScreen> {
             .animate()
             .fadeIn(duration: 500.ms, curve: Curves.easeOut)
             .slideX(begin: -0.08, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
-        const SizedBox(height: 20),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return PopularCard(
-              name: items[index]['name'],
-              description: items[index]['description'],
-              icon: items[index]['icon'],
-              color: items[index]['color'],
-              index: index,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Opening ${items[index]['name']}...'),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: AppTheme.textPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.all(16),
-                    duration: const Duration(milliseconds: 2000),
-                  ),
-                );
-              },
+        SizedBox(height: isMobile ? 20 : (isTablet ? 24 : 28)),
+        isDesktop
+            ? _buildPopularGrid(items, isTablet, isDesktop)
+            : _buildPopularList(items, isMobile, isTablet),
+      ],
+    );
+  }
+
+  Widget _buildPopularList(List<Map<String, dynamic>> items, bool isMobile, bool isTablet) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return PopularCard(
+          name: items[index]['name'],
+          description: items[index]['description'],
+          icon: items[index]['icon'],
+          color: items[index]['color'],
+          index: index,
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Opening ${items[index]['name']}...'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppTheme.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(milliseconds: 2000),
+              ),
             );
           },
-        ),
-      ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPopularGrid(List<Map<String, dynamic>> items, bool isTablet, bool isDesktop) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 20,
+        childAspectRatio: 2.8,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return PopularCard(
+          name: items[index]['name'],
+          description: items[index]['description'],
+          icon: items[index]['icon'],
+          color: items[index]['color'],
+          index: index,
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Opening ${items[index]['name']}...'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppTheme.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(milliseconds: 2000),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
