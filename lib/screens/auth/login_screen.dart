@@ -5,7 +5,6 @@ import 'package:exam_ready/theme/app_theme.dart';
 import 'package:exam_ready/services/auth_service.dart';
 import 'package:exam_ready/widgets/gradient_button.dart';
 import 'signup_screen.dart';
-import 'package:exam_ready/screens/ui/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
 
-
     setState(() => _isLoading = false);
 
     if (!mounted) return;
@@ -71,20 +69,47 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-  setState(() => _isGoogleLoading = true);
+    setState(() => _isGoogleLoading = true);
 
-  try {
-    // Call your existing AuthService (it should return UserCredential or null)
-    final Map<String, dynamic> result = await _authService.signInWithGoogle();
-    setState(() => _isGoogleLoading = false);
+    try {
+      final Map<String, dynamic> result = await _authService.signInWithGoogle();
+      setState(() => _isGoogleLoading = false);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (!result['success']) {
-      // Error occurred
+      if (!result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Google sign-in failed'),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const UserOnboardingPage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    } catch (e, st) {
+      setState(() => _isGoogleLoading = false);
+      debugPrint("Google sign-in error: $e\n$st");
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'Google sign-in failed'),
+          content: const Text('An error occurred while signing in'),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -92,38 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       );
-      return;
     }
-
-    // Login successful → Navigate to Dashboard
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const UserOnboardingPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
-  } catch (e, st) {
-    setState(() => _isGoogleLoading = false);
-    debugPrint("Google sign-in error: $e\n$st");
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('An error occurred while signing in'),
-        backgroundColor: AppTheme.errorColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
   }
-}
 
   Future<void> _handleForgotPassword() async {
     if (_emailController.text.isEmpty) {
@@ -149,9 +144,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['message']),
-        backgroundColor: result['success']
-            ? AppTheme.secondaryColor
-            : AppTheme.errorColor,
+        backgroundColor:
+            result['success'] ? AppTheme.secondaryColor : AppTheme.errorColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -167,10 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOut;
-          var tween = Tween(
-            begin: begin,
-            end: end,
-          ).chain(CurveTween(curve: curve));
+          var tween = Tween(begin: begin, end: end)
+              .chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -218,66 +210,90 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
-        child: SafeArea(
+        child: Center(
+          // 🔹 Center everything on larger screens (desktop / laptop)
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.08,
-                vertical: screenHeight * 0.02,
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth < 600 ? screenWidth * 0.08 : 32,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 420, // Formal, card-style width on web
               ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: screenHeight * 0.06),
-
-                    // Logo/Icon Hero
-                    Center(
-                      child: Hero(
-                        tag: 'auth_logo',
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            shape: BoxShape.circle,
-                            boxShadow: AppTheme.cardShadow,
+              child: Card(
+                elevation: 16,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                shadowColor: Colors.black.withAlpha(36),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: screenHeight * 0.04 > 40
+                        ? screenHeight * 0.04
+                        : 40,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo/Icon Hero
+                        Center(
+                          child: Hero(
+                            tag: 'auth_logo',
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                shape: BoxShape.circle,
+                                boxShadow: AppTheme.cardShadow,
+                              ),
+                              child: const Icon(
+                                Icons.lock_outline,
+                                size: 40,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.lock_outline,
-                            size: 50,
-                            color: Colors.white,
+                        ).animate().scale(
+                              duration: 600.ms,
+                              curve: Curves.elasticOut,
+                            ),
+
+                        const SizedBox(height: 24),
+
+                        // Welcome Text
+                        Text(
+                          'Welcome Back',
+                          style: AppTheme.headingStyle.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
                           ),
-                        ),
-                      ),
-                    ).animate().scale(
-                      duration: 600.ms,
-                      curve: Curves.elasticOut,
-                    ),
-
-                    SizedBox(height: screenHeight * 0.05),
-
-                    // Welcome Text
-                    Text('Welcome Back!', style: AppTheme.headingStyle)
-                        .animate()
-                        .fadeIn(delay: 200.ms)
-                        .slideX(begin: -0.2, end: 0),
-
-                    const SizedBox(height: 8),
-                    Text(
-                          'Login to continue your journey',
-                          style: AppTheme.subHeadingStyle,
+                          textAlign: TextAlign.center,
                         )
-                        .animate()
-                        .fadeIn(delay: 300.ms)
-                        .slideX(begin: -0.2, end: 0),
+                            .animate()
+                            .fadeIn(delay: 200.ms)
+                            .slideX(begin: -0.2, end: 0),
 
-                    SizedBox(height: screenHeight * 0.05),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sign in to continue your exam preparation',
+                          style: AppTheme.subHeadingStyle,
+                          textAlign: TextAlign.center,
+                        )
+                            .animate()
+                            .fadeIn(delay: 300.ms)
+                            .slideX(begin: -0.2, end: 0),
 
-                    // Email Field
-                    TextFormField(
+                        const SizedBox(height: 32),
+
+                        // Email Field
+                        TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: AppTheme.inputTextStyle,
@@ -297,14 +313,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         )
-                        .animate()
-                        .fadeIn(delay: 400.ms)
-                        .slideY(begin: 0.2, end: 0),
+                            .animate()
+                            .fadeIn(delay: 400.ms)
+                            .slideY(begin: 0.2, end: 0),
 
-                    const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
-                    // Password Field
-                    TextFormField(
+                        // Password Field
+                        TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           style: AppTheme.inputTextStyle,
@@ -320,7 +336,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               onPressed: () {
                                 setState(
-                                  () => _obscurePassword = !_obscurePassword,
+                                  () =>
+                                      _obscurePassword = !_obscurePassword,
                                 );
                               },
                             ),
@@ -335,89 +352,95 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         )
-                        .animate()
-                        .fadeIn(delay: 500.ms)
-                        .slideY(begin: 0.2, end: 0),
+                            .animate()
+                            .fadeIn(delay: 500.ms)
+                            .slideY(begin: 0.2, end: 0),
 
-                    const SizedBox(height: 12),
+                        const SizedBox(height: 8),
 
-                    // Forgot Password
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _handleForgotPassword,
-                        child: Text(
-                          'Forgot Password?',
-                          style: AppTheme.labelTextStyle.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
+                        // Forgot Password
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _handleForgotPassword,
+                            child: Text(
+                              'Forgot Password?',
+                              style: AppTheme.labelTextStyle.copyWith(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 600.ms),
+                        ).animate().fadeIn(delay: 600.ms),
 
-                    SizedBox(height: screenHeight * 0.03),
+                        const SizedBox(height: 16),
 
-                    // Login Button
-                    GradientButton(
+                        // Login Button
+                        GradientButton(
                           text: 'Login',
                           onPressed: _handleLogin,
                           isLoading: _isLoading,
                           icon: Icons.login,
                         )
-                        .animate()
-                        .fadeIn(delay: 700.ms)
-                        .slideY(begin: 0.2, end: 0),
+                            .animate()
+                            .fadeIn(delay: 700.ms)
+                            .slideY(begin: 0.2, end: 0),
 
-                    SizedBox(height: screenHeight * 0.03),
+                        const SizedBox(height: 24),
 
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: Colors.grey.shade300)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('OR', style: AppTheme.subHeadingStyle),
-                        ),
-                        Expanded(child: Divider(color: Colors.grey.shade300)),
-                      ],
-                    ).animate().fadeIn(delay: 800.ms),
-
-                    SizedBox(height: screenHeight * 0.03),
-
-                    // Google Sign-In Button
-                    _buildGoogleSignInButton()
-                        .animate()
-                        .fadeIn(delay: 850.ms)
-                        .slideY(begin: 0.2, end: 0),
-
-                    SizedBox(height: screenHeight * 0.03),
-
-                    // Sign Up Link
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Don\'t have an account? ',
-                            style: AppTheme.subHeadingStyle,
-                          ),
-                          GestureDetector(
-                            onTap: _navigateToSignUp,
-                            child: Text(
-                              'Sign Up',
-                              style: AppTheme.labelTextStyle.copyWith(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
+                        // Divider
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'OR',
+                                style: AppTheme.subHeadingStyle,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 900.ms),
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 800.ms),
 
-                    SizedBox(height: screenHeight * 0.02),
-                  ],
+                        const SizedBox(height: 20),
+
+                        // Google Sign-In Button
+                        _buildGoogleSignInButton()
+                            .animate()
+                            .fadeIn(delay: 850.ms)
+                            .slideY(begin: 0.2, end: 0),
+
+                        const SizedBox(height: 24),
+
+                        // Sign Up Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Don\'t have an account? ',
+                              style: AppTheme.subHeadingStyle,
+                            ),
+                            GestureDetector(
+                              onTap: _navigateToSignUp,
+                              child: Text(
+                                'Sign Up',
+                                style: AppTheme.labelTextStyle.copyWith(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 900.ms),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -428,7 +451,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// IMPORTANT: Move the AnimatedGoogleButton class OUTSIDE of _LoginScreenState
+// Animated Google Button (unchanged, kept outside LoginScreen state)
 class AnimatedGoogleButton extends StatefulWidget {
   final VoidCallback onPressed;
 
@@ -496,8 +519,8 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                 color: _isPressed
                     ? Colors.black.withAlpha(26)
                     : (_isHovered
-                          ? Colors.blue.withAlpha(51)
-                          : Colors.black.withAlpha(20)),
+                        ? Colors.blue.withAlpha(51)
+                        : Colors.black.withAlpha(20)),
                 blurRadius: _isPressed ? 8 : (_isHovered ? 20 : 12),
                 offset: Offset(0, _isPressed ? 2 : (_isHovered ? 8 : 4)),
                 spreadRadius: _isHovered ? 2 : 0,
@@ -512,7 +535,6 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
           ),
           child: Stack(
             children: [
-              // Shimmer effect overlay
               if (_isHovered)
                 AnimatedBuilder(
                   animation: _shimmerAnimation,
@@ -537,7 +559,6 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                   },
                 ),
 
-              // Button content
               Padding(
                 padding: const EdgeInsets.symmetric(
                   vertical: 16,
@@ -546,20 +567,16 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Google Icon with scale animation
                     AnimatedScale(
                       scale: _isHovered ? 1.1 : 1.0,
                       duration: const Duration(milliseconds: 200),
                       child: const Icon(
-                        Icons.g_mobiledata, // Simple stylized 'G' icon
+                        Icons.g_mobiledata,
                         color: Colors.redAccent,
                         size: 28,
                       ),
                     ),
-
                     const SizedBox(width: 16),
-
-                    // Text with color animation
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 200),
                       style: TextStyle(
@@ -572,8 +589,6 @@ class _AnimatedGoogleButtonState extends State<AnimatedGoogleButton>
                       ),
                       child: const Text('Continue with Google'),
                     ),
-
-                    // Arrow icon that appears on hover
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,

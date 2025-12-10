@@ -13,6 +13,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart'; // 👈 for kIsWeb & defaultTargetPlatform
 
 class QuestionPaperSubmissionPage extends StatefulWidget {
   const QuestionPaperSubmissionPage({Key? key}) : super(key: key);
@@ -98,13 +99,23 @@ class _QuestionPaperSubmissionPageState
     setState(() {
       isFormValid =
           selectedImage != null &&
-              selectedCollege != null &&
-              selectedBranch != null &&
-              selectedSemester != null &&
-              selectedSubject != null &&
-              selectedExamType != null;
+          selectedCollege != null &&
+          selectedBranch != null &&
+          selectedSemester != null &&
+          selectedSubject != null &&
+          selectedExamType != null;
     });
   }
+
+  bool get _isMobilePlatform =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
+  /// Web opened on phone/tablet
+  bool get _isMobileWeb => kIsWeb && _isMobilePlatform;
+
+  /// Web opened on PC/laptop (Chrome, Edge, etc.)
+  bool get _isDesktopWeb => kIsWeb && !_isMobilePlatform;
 
   Future<String> _extractTextFromImage(File imageFile) async {
     try {
@@ -366,17 +377,18 @@ class _QuestionPaperSubmissionPageState
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSourceCard(
-                          icon: Icons.camera_alt_outlined,
-                          title: 'Camera',
-                          color: const Color(0xFF8B5CF6),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _pickImage(ImageSource.camera);
-                          },
+                      if (!_isDesktopWeb) // 👈 hides camera on PC web
+                        Expanded(
+                          child: _buildSourceCard(
+                            icon: Icons.camera_alt_outlined,
+                            title: 'Camera',
+                            color: const Color(0xFF8B5CF6),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.camera);
+                            },
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -522,18 +534,18 @@ class _QuestionPaperSubmissionPageState
       _showSnackBar('Saving to database...', isInfo: true);
       final String docId = await _firestoreService
           .submitToSubmittedPapers(
-        college: selectedCollege!,
-        branch: selectedBranch!,
-        semester: selectedSemester!,
-        subject: selectedSubject!,
-        examType: selectedExamType!,
-        imageUrl: imageUrl,
-        // no userId needed – service handles it
-      )
+            college: selectedCollege!,
+            branch: selectedBranch!,
+            semester: selectedSemester!,
+            subject: selectedSubject!,
+            examType: selectedExamType!,
+            imageUrl: imageUrl,
+            // no userId needed – service handles it
+          )
           .timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('Database save timed out'),
-      );
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('Database save timed out'),
+          );
 
       developer.log(
         'Submission successful. Firestore Document ID: $docId',
@@ -567,17 +579,17 @@ class _QuestionPaperSubmissionPageState
 
       await _firestoreService
           .submitToQuestionPapers(
-        college: selectedCollege!,
-        branch: selectedBranch!,
-        semester: selectedSemester!,
-        subject: selectedSubject!,
-        examType: selectedExamType!,
-        topics: topics,
-      )
+            college: selectedCollege!,
+            branch: selectedBranch!,
+            semester: selectedSemester!,
+            subject: selectedSubject!,
+            examType: selectedExamType!,
+            topics: topics,
+          )
           .timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('Database save timed out'),
-      );
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('Database save timed out'),
+          );
 
       _showSnackBar('Updating topic frequency...', isInfo: true);
 
@@ -872,8 +884,8 @@ class _QuestionPaperSubmissionPageState
               isError
                   ? Icons.error_outline_rounded
                   : isSuccess
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.info_outline_rounded,
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.info_outline_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -892,8 +904,8 @@ class _QuestionPaperSubmissionPageState
         backgroundColor: isError
             ? errorColor
             : isSuccess
-                ? successColor
-                : primaryColor,
+            ? successColor
+            : primaryColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -915,20 +927,25 @@ class _QuestionPaperSubmissionPageState
               builder: (context, constraints) {
                 final double width = constraints.maxWidth;
                 final bool isWide = width >= 900;
-                final double maxContentWidth =
-                    isWide ? 1100 : 600; // desktop/tablet vs mobile
+                final double maxContentWidth = isWide
+                    ? 1100
+                    : 600; // desktop/tablet vs mobile
 
                 return Column(
                   children: [
-                    _buildAppBar(isWide: isWide, maxContentWidth: maxContentWidth),
+                    _buildAppBar(
+                      isWide: isWide,
+                      maxContentWidth: maxContentWidth,
+                    ),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.all(20),
                         child: Center(
                           child: ConstrainedBox(
-                            constraints:
-                                BoxConstraints(maxWidth: maxContentWidth),
+                            constraints: BoxConstraints(
+                              maxWidth: maxContentWidth,
+                            ),
                             child: isWide
                                 ? Row(
                                     crossAxisAlignment:
@@ -1043,10 +1060,7 @@ class _QuestionPaperSubmissionPageState
     );
   }
 
-  Widget _buildAppBar({
-    required bool isWide,
-    required double maxContentWidth,
-  }) {
+  Widget _buildAppBar({required bool isWide, required double maxContentWidth}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1116,7 +1130,16 @@ class _QuestionPaperSubmissionPageState
     return GestureDetector(
       onTap: (isCompressing || isExtractingText || isExtractingTopics)
           ? null
-          : _showImageSourceDialog,
+          : () {
+              if (_isDesktopWeb) {
+                // ✅ PC Web: only allow local file upload (no camera)
+                _pickImage(ImageSource.gallery); // opens file picker on web
+              } else {
+                // ✅ Mobile web or mobile app: show Gallery / Camera bottom sheet
+                _showImageSourceDialog();
+              }
+            },
+
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         height: 240,
@@ -1160,8 +1183,8 @@ class _QuestionPaperSubmissionPageState
                     isCompressing
                         ? 'Compressing Image'
                         : isExtractingText
-                            ? 'Extracting Text'
-                            : 'Analyzing Topics',
+                        ? 'Extracting Text'
+                        : 'Analyzing Topics',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1174,8 +1197,8 @@ class _QuestionPaperSubmissionPageState
                     isCompressing
                         ? 'Optimizing your image'
                         : isExtractingText
-                            ? 'Reading text from the paper'
-                            : 'AI is extracting topics',
+                        ? 'Reading text from the paper'
+                        : 'AI is extracting topics',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: textSecondary,
@@ -1184,151 +1207,151 @@ class _QuestionPaperSubmissionPageState
                 ],
               )
             : selectedImage == null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.cloud_upload_outlined,
-                          size: 48,
-                          color: primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Upload Question Paper',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to select from gallery or camera',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: primaryColor.withOpacity(0.15),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          'AI Topic Extraction • Auto Compress',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: textPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.file(
-                          selectedImage!,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                      ),
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedImage = null;
-                              extractedText = '';
-                              extractedTopics = [];
-                              _validateForm();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: errorColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: errorColor.withOpacity(0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 16,
-                        left: 16,
-                        right: 16,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: successColor,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: successColor.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Image Selected (${(selectedImage!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)}MB)',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 48,
+                      color: primaryColor,
+                    ),
                   ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Upload Question Paper',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap to select from gallery or camera',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'AI Topic Extraction • Auto Compress',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.file(
+                      selectedImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedImage = null;
+                          extractedText = '';
+                          extractedTopics = [];
+                          _validateForm();
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: errorColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: errorColor.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: successColor,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: successColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Image Selected (${(selectedImage!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)}MB)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

@@ -6,8 +6,7 @@ class AuthService {
   // Firebase Auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Google Sign-In instance
-  // Use your WEB CLIENT ID for web, and null for mobile (auto config)
+  // Google Sign-In instance (used only on mobile)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
         ? '911973583663-ciict72ribfd16shrdnd59sr22vvidre.apps.googleusercontent.com'
@@ -204,29 +203,42 @@ class AuthService {
     }
   }
 
-  // Google Sign-In
+  // Google Sign-In (web + mobile)
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      UserCredential userCredential;
 
-      if (googleUser == null) {
-        return {'success': false, 'message': 'Google Sign-In was cancelled'};
+      if (kIsWeb) {
+        // 🔹 WEB: use Firebase signInWithPopup
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        googleProvider.setCustomParameters({
+          'prompt': 'select_account',
+        });
+
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        // 🔹 MOBILE: use google_sign_in plugin
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+        if (googleUser == null) {
+          return {
+            'success': false,
+            'message': 'Google Sign-In was cancelled',
+          };
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential = await _auth.signInWithCredential(credential);
       }
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
 
       return {
         'success': true,
@@ -248,7 +260,9 @@ class AuthService {
 
   /// Sign out from Google + Firebase
   Future<void> signOutGoogle() async {
-    await _googleSignIn.signOut();
+    if (!kIsWeb) {
+      await _googleSignIn.signOut();
+    }
     await _auth.signOut();
   }
 }
