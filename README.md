@@ -306,11 +306,3 @@ See CHANGELOG.md for version history and patch notes.
 
 ---
 
-If you'd like, I can generate:
-
-✅ A **banner image** for the README  
-✅ A **full docs/ folder** with architecture diagrams  
-✅ A **GitHub Copilot JSON prompt** to regenerate README automatically  
-✅ A **badges section with real-time stats**  
-
-Want me to include those?
