@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:exam_ready/services/cloudinary_service.dart';
 import 'dart:convert';
 
 class UserOnboardingPage extends StatefulWidget {
@@ -28,10 +27,8 @@ class _UserOnboardingPageState extends State<UserOnboardingPage> {
   bool _isSubmitting = false;
   String? _uploadedPhotoUrl;
 
-  // Get Cloudinary credentials from .env
-  String get cloudinaryCloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
-  String get cloudinaryUploadPreset =>
-      dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
+  // Secure upload via Cloud Functions
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   @override
   void initState() {
@@ -120,30 +117,9 @@ class _UserOnboardingPageState extends State<UserOnboardingPage> {
 
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
-      if (cloudinaryCloudName.isEmpty || cloudinaryUploadPreset.isEmpty) {
-        throw Exception('Cloudinary credentials not configured in .env file');
-      }
-
-      final url = Uri.parse(
-        'https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload',
-      );
-
-      final request = http.MultipartRequest('POST', url);
-      request.fields['upload_preset'] = cloudinaryUploadPreset;
-      request.files.add(
-        await http.MultipartFile.fromPath('file', imageFile.path),
-      );
-
-      final response = await request.send();
-      final responseData = await response.stream.toBytes();
-      final responseString = String.fromCharCodes(responseData);
-
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(responseString);
-        return jsonResponse['secure_url'] as String;
-      } else {
-        throw Exception('Upload failed: ${response.statusCode}');
-      }
+      // Use the secure CloudinaryService (signed uploads via Cloud Function)
+      final secureUrl = await _cloudinaryService.uploadImage(imageFile);
+      return secureUrl;
     } catch (e) {
       debugPrint('Cloudinary upload error: $e');
       return null;

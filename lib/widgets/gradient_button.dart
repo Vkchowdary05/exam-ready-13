@@ -54,9 +54,18 @@ class _GradientButtonState extends State<GradientButton> {
         width: widget.width ?? double.infinity,
         height: widget.height,
         decoration: BoxDecoration(
-          gradient: widget.gradient ?? AppTheme.primaryGradient,
+          gradient: widget.gradient ??
+              const LinearGradient(
+                colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+              ),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.buttonShadow,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -77,7 +86,14 @@ class _GradientButtonState extends State<GradientButton> {
                         Icon(widget.icon, color: Colors.white, size: 22),
                         const SizedBox(width: 8),
                       ],
-                      Text(widget.text, style: AppTheme.buttonTextStyle),
+                      Text(
+                        widget.text,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
           ),

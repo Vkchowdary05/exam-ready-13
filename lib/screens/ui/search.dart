@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../theme/app_theme.dart';
+import '../../data/dropdown_data.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:shimmer/shimmer.dart';
@@ -1326,11 +1328,11 @@ class FilterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final branches = selectedCollege != null
-        ? collegeData[selectedCollege] ?? []
+        ? DropdownData.collegeData[selectedCollege] ?? []
         : <String>[];
     final List<String> subjects;
     if (selectedBranch != null && selectedSemester != null) {
-      subjects = subjectData[selectedBranch!]?[selectedSemester!] ?? <String>[];
+      subjects = DropdownData.subjectData[selectedBranch!]?[selectedSemester!] ?? <String>[];
     } else {
       subjects = <String>[];
     }
@@ -1405,7 +1407,7 @@ class FilterCard extends StatelessWidget {
                 label: 'College',
                 icon: Icons.school_rounded,
                 value: selectedCollege,
-                items: collegeData.keys.toList(),
+                items: DropdownData.collegeData.keys.toList(),
                 onChanged: onCollegeChanged,
               ),
               const SizedBox(height: 12),
@@ -1421,7 +1423,7 @@ class FilterCard extends StatelessWidget {
                 label: 'Semester',
                 icon: Icons.calendar_today_rounded,
                 value: selectedSemester,
-                items: semesters,
+                items: DropdownData.semesters,
                 onChanged: onSemesterChanged,
               ),
               const SizedBox(height: 12),
@@ -1437,7 +1439,7 @@ class FilterCard extends StatelessWidget {
                 label: 'Exam Type',
                 icon: Icons.assignment_rounded,
                 value: selectedExamType,
-                items: examTypes,
+                items: DropdownData.examTypes,
                 onChanged: onExamTypeChanged,
               ),
             ],
@@ -1457,7 +1459,7 @@ class FilterCard extends StatelessWidget {
                 label: 'College',
                 icon: Icons.school_rounded,
                 value: selectedCollege,
-                items: collegeData.keys.toList(),
+                items: DropdownData.collegeData.keys.toList(),
                 onChanged: onCollegeChanged,
               ),
             ),
@@ -1477,7 +1479,7 @@ class FilterCard extends StatelessWidget {
                 label: 'Semester',
                 icon: Icons.calendar_today_rounded,
                 value: selectedSemester,
-                items: semesters,
+                items: DropdownData.semesters,
                 onChanged: onSemesterChanged,
               ),
             ),
@@ -1497,7 +1499,7 @@ class FilterCard extends StatelessWidget {
                 label: 'Exam Type',
                 icon: Icons.assignment_rounded,
                 value: selectedExamType,
-                items: examTypes,
+                items: DropdownData.examTypes,
                 onChanged: onExamTypeChanged,
               ),
             ),

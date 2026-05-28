@@ -1,7 +1,7 @@
 // lib/widgets/popular_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../theme/entry_theme.dart';
+import '../theme/app_theme.dart';
 
 class PopularCard extends StatefulWidget {
   final String name;
@@ -39,7 +39,7 @@ class _PopularCardState extends State<PopularCard> {
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: _isHovered
@@ -107,14 +107,20 @@ class _PopularCardState extends State<PopularCard> {
                         children: [
                           Text(
                             widget.name,
-                            style: AppTheme.cardTitleStyle,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             widget.description,
-                            style: AppTheme.cardSubtitleStyle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),

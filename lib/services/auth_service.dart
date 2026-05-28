@@ -1,10 +1,16 @@
+// lib/services/auth_service.dart
+
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:exam_ready/utils/api_error_handler.dart';
+import 'package:exam_ready/utils/constants.dart';
 
 class AuthService {
-  // Firebase Auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Google Sign-In instance (used only on mobile)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -19,7 +25,11 @@ class AuthService {
   // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign Up with Email and Password
+  /// Check if current user's email is verified
+  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+
+  // ─── Sign Up ───────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
@@ -31,29 +41,39 @@ class AuthService {
         password: password,
       );
 
-      // Update display name and reload user to persist changes
+      // Update display name
       await result.user?.updateDisplayName(name);
       await result.user?.reload();
 
-      // Get updated user
-      User? updatedUser = _auth.currentUser;
+      // Send verification email
+      await result.user?.sendEmailVerification();
+
+      // Create user document in Firestore
+      final user = _auth.currentUser;
+      if (user != null) {
+        await _createUserDocument(user, name: name);
+      }
 
       return {
         'success': true,
-        'message': 'Account created successfully!',
-        'user': updatedUser,
+        'message': 'Account created! Please verify your email.',
+        'user': _auth.currentUser,
       };
     } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getErrorMessage(e.code)};
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
     } catch (e) {
       return {
         'success': false,
-        'message': 'An unexpected error occurred. Please try again.',
+        'message': ApiErrorHandler.getReadableError(e),
       };
     }
   }
 
-  // Sign In with Email and Password
+  // ─── Sign In ───────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
@@ -64,162 +84,42 @@ class AuthService {
         password: password,
       );
 
+      // Update last active timestamp
+      if (result.user != null) {
+        await _updateLastActive(result.user!.uid);
+      }
+
       return {
         'success': true,
         'message': 'Login successful!',
         'user': result.user,
       };
     } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getErrorMessage(e.code)};
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
     } catch (e) {
       return {
         'success': false,
-        'message': 'An unexpected error occurred. Please try again.',
+        'message': ApiErrorHandler.getReadableError(e),
       };
     }
   }
 
-  // Reset Password
-  Future<Map<String, dynamic>> resetPassword({required String email}) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
+  // ─── Google Sign-In ────────────────────────────────────────────
 
-      return {
-        'success': true,
-        'message': 'Password reset email sent! Check your inbox.',
-      };
-    } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getErrorMessage(e.code)};
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'An unexpected error occurred. Please try again.',
-      };
-    }
-  }
-
-  // Sign Out (generic)
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  // Update User Profile
-  Future<Map<String, dynamic>> updateProfile({
-    String? displayName,
-    String? photoURL,
-  }) async {
-    try {
-      User? user = _auth.currentUser;
-
-      if (user == null) {
-        return {'success': false, 'message': 'No user is currently signed in.'};
-      }
-
-      if (displayName != null) {
-        await user.updateDisplayName(displayName);
-      }
-
-      if (photoURL != null) {
-        await user.updatePhotoURL(photoURL);
-      }
-
-      await user.reload();
-      User? updatedUser = _auth.currentUser;
-
-      return {
-        'success': true,
-        'message': 'Profile updated successfully!',
-        'user': updatedUser,
-      };
-    } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getErrorMessage(e.code)};
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to update profile. Please try again.',
-      };
-    }
-  }
-
-  // Delete Account
-  Future<Map<String, dynamic>> deleteAccount() async {
-    try {
-      User? user = _auth.currentUser;
-
-      if (user == null) {
-        return {'success': false, 'message': 'No user is currently signed in.'};
-      }
-
-      await user.delete();
-
-      return {'success': true, 'message': 'Account deleted successfully.'};
-    } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getErrorMessage(e.code)};
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to delete account. Please try again.',
-      };
-    }
-  }
-
-  // Get user-friendly error messages
-  String _getErrorMessage(String code) {
-    switch (code) {
-      case 'weak-password':
-        return 'Password is too weak. Use at least 6 characters.';
-      case 'email-already-in-use':
-        return 'An account already exists with this email.';
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-        return 'Incorrect password. Please try again.';
-      case 'invalid-email':
-        return 'Invalid email address format.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
-      case 'operation-not-allowed':
-        return 'Email/password accounts are not enabled.';
-      case 'network-request-failed':
-        return 'Network error. Check your internet connection.';
-      case 'invalid-credential':
-        return 'The credentials provided are invalid or expired.';
-      case 'account-exists-with-different-credential':
-        return 'An account exists with the same email but different sign-in credentials.';
-      case 'invalid-verification-code':
-        return 'Invalid verification code. Please try again.';
-      case 'invalid-verification-id':
-        return 'Invalid verification ID. Please request a new code.';
-      case 'expired-action-code':
-        return 'This verification code has expired. Request a new one.';
-      case 'invalid-action-code':
-        return 'This verification code is invalid or already used.';
-      case 'requires-recent-login':
-        return 'Please log in again to perform this action.';
-      default:
-        return 'Authentication error: $code. Please try again.';
-    }
-  }
-
-  // Google Sign-In (web + mobile)
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       UserCredential userCredential;
 
       if (kIsWeb) {
-        // 🔹 WEB: use Firebase signInWithPopup
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
-        googleProvider.setCustomParameters({
-          'prompt': 'select_account',
-        });
-
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
         userCredential = await _auth.signInWithPopup(googleProvider);
       } else {
-        // 🔹 MOBILE: use google_sign_in plugin
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
         if (googleUser == null) {
@@ -240,6 +140,14 @@ class AuthService {
         userCredential = await _auth.signInWithCredential(credential);
       }
 
+      // Create/update user document
+      if (userCredential.user != null) {
+        await _createUserDocument(
+          userCredential.user!,
+          name: userCredential.user!.displayName,
+        );
+      }
+
       return {
         'success': true,
         'message': 'Signed in successfully with Google!',
@@ -248,21 +156,240 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       return {
         'success': false,
-        'message': e.message ?? 'Google Sign-In failed',
+        'message': ApiErrorHandler.getReadableError(e),
       };
     } catch (e) {
+      developer.log(
+        'Google sign-in error',
+        name: 'AuthService',
+        error: e,
+      );
       return {
         'success': false,
-        'message': 'An error occurred: ${e.toString()}',
+        'message': ApiErrorHandler.getReadableError(e),
       };
     }
   }
 
-  /// Sign out from Google + Firebase
-  Future<void> signOutGoogle() async {
-    if (!kIsWeb) {
-      await _googleSignIn.signOut();
+  // ─── Email Verification ────────────────────────────────────────
+
+  /// Send email verification to current user
+  Future<Map<String, dynamic>> sendEmailVerification() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return {'success': false, 'message': 'No user signed in.'};
+      }
+
+      if (user.emailVerified) {
+        return {'success': true, 'message': 'Email already verified.'};
+      }
+
+      await user.sendEmailVerification();
+      return {
+        'success': true,
+        'message': 'Verification email sent! Check your inbox.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
     }
-    await _auth.signOut();
+  }
+
+  /// Reload user and check if email is now verified
+  Future<bool> checkEmailVerified() async {
+    try {
+      await _auth.currentUser?.reload();
+      return _auth.currentUser?.emailVerified ?? false;
+    } catch (e) {
+      developer.log(
+        'Error checking email verification',
+        name: 'AuthService',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  // ─── Reset Password ────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> resetPassword({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      return {
+        'success': true,
+        'message': 'Password reset email sent! Check your inbox.',
+      };
+    } on FirebaseAuthException catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    }
+  }
+
+  // ─── Sign Out ──────────────────────────────────────────────────
+
+  /// Complete sign out: Firebase Auth + Google + state cleanup.
+  ///
+  /// When using Riverpod, the caller should also invalidate all
+  /// user-dependent providers after calling this.
+  Future<void> signOut() async {
+    try {
+      // Sign out from Google if applicable
+      if (!kIsWeb) {
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {
+          // Ignore Google sign-out errors
+        }
+      }
+
+      // Sign out from Firebase
+      await _auth.signOut();
+
+      developer.log('User signed out successfully', name: 'AuthService');
+    } catch (e) {
+      developer.log('Error during sign out', name: 'AuthService', error: e);
+      // Still try to sign out from Firebase even if Google fails
+      await _auth.signOut();
+    }
+  }
+
+  /// Sign out from Google + Firebase (backward compatibility)
+  Future<void> signOutGoogle() async => signOut();
+
+  // ─── Update Profile ────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
+    try {
+      User? user = _auth.currentUser;
+
+      if (user == null) {
+        return {'success': false, 'message': 'No user is currently signed in.'};
+      }
+
+      if (displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
+
+      if (photoURL != null) {
+        await user.updatePhotoURL(photoURL);
+      }
+
+      await user.reload();
+
+      // Update Firestore document too
+      final updates = <String, dynamic>{};
+      if (displayName != null) updates['name'] = displayName;
+      if (photoURL != null) updates['photoUrl'] = photoURL;
+      updates['lastActive'] = FieldValue.serverTimestamp();
+
+      if (updates.isNotEmpty) {
+        await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(user.uid)
+            .set(updates, SetOptions(merge: true));
+      }
+
+      return {
+        'success': true,
+        'message': 'Profile updated successfully!',
+        'user': _auth.currentUser,
+      };
+    } on FirebaseAuthException catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    }
+  }
+
+  // ─── Delete Account ────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      User? user = _auth.currentUser;
+
+      if (user == null) {
+        return {'success': false, 'message': 'No user is currently signed in.'};
+      }
+
+      await user.delete();
+
+      return {'success': true, 'message': 'Account deleted successfully.'};
+    } on FirebaseAuthException catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': ApiErrorHandler.getReadableError(e),
+      };
+    }
+  }
+
+  // ─── Private Helpers ───────────────────────────────────────────
+
+  /// Create or merge user document in Firestore on sign up / first sign in
+  Future<void> _createUserDocument(User user, {String? name}) async {
+    try {
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'name': name ?? user.displayName ?? '',
+        'photoUrl': user.photoURL ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastActive': FieldValue.serverTimestamp(),
+        'role': 'user',
+        'papersUploaded': 0,
+        'contributorXP': 0,
+        'streakDays': 0,
+        'badges': [],
+        'bookmarkedPapers': [],
+      }, SetOptions(merge: true));
+    } catch (e) {
+      developer.log(
+        'Error creating user document',
+        name: 'AuthService',
+        error: e,
+      );
+      // Non-fatal: don't block auth flow
+    }
+  }
+
+  /// Update last active timestamp
+  Future<void> _updateLastActive(String userId) async {
+    try {
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId)
+          .set(
+        {'lastActive': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // Non-fatal
+    }
   }
 }

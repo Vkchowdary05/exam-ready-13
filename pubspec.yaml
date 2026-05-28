@@ -40,6 +40,9 @@ dependencies:
   cloudinary_flutter: ^1.3.0
   cloudinary_url_gen: ^1.0.0
 
+  # Cloud Functions (server-side API proxy)
+  cloud_functions: ^5.1.3
+
   # Networking & Media
   http: ^1.2.0
   image_picker: ^1.2.0
@@ -87,7 +90,7 @@ flutter:
     - assets/dashbord_page.jpg
     - assets/Login_page.jpg
     - assets/Logo.png
-    - .env
+    # SECURITY: .env REMOVED from assets — API keys are now server-side
 
 # Launcher icon configuration (generate app icons from a single image)
 # Launcher icon configuration (generate app icons from a single image)

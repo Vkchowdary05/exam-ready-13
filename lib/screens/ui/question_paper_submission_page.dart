@@ -450,7 +450,7 @@ class _QuestionPaperSubmissionPageState
   void _handleCollegeChange(String? value) {
     setState(() {
       selectedCollege = value;
-      availableBranches = collegeData[value]?.cast<String>() ?? [];
+      availableBranches = DropdownData.collegeData[value]?.cast<String>() ?? [];
       selectedBranch = null;
       selectedSemester = null;
       availableSubjects = [];
@@ -474,11 +474,11 @@ class _QuestionPaperSubmissionPageState
       selectedSemester = value;
       if (selectedBranch != null && value != null) {
         String branchKey = selectedBranch!;
-        if (!subjectData.containsKey(branchKey)) {
+        if (!DropdownData.subjectData.containsKey(branchKey)) {
           branchKey = 'CSE';
         }
         availableSubjects =
-            subjectData[branchKey]?[value]?.cast<String>() ?? [];
+            DropdownData.subjectData[branchKey]?[value]?.cast<String>() ?? [];
       }
       selectedSubject = null;
       _validateForm();
@@ -1003,7 +1003,7 @@ class _QuestionPaperSubmissionPageState
         _buildDropdown(
           label: 'College',
           value: selectedCollege,
-          items: collegeData.keys.toList(),
+          items: DropdownData.collegeData.keys.toList(),
           icon: Icons.school_outlined,
           color: primaryColor,
           onChanged: _handleCollegeChange,
@@ -1020,7 +1020,7 @@ class _QuestionPaperSubmissionPageState
         _buildDropdown(
           label: 'Semester',
           value: selectedSemester,
-          items: semesters,
+          items: DropdownData.semesters,
           icon: Icons.calendar_month_outlined,
           color: const Color(0xFFF59E0B),
           enabled: selectedBranch != null,
@@ -1043,7 +1043,7 @@ class _QuestionPaperSubmissionPageState
         _buildDropdown(
           label: 'Exam Type',
           value: selectedExamType,
-          items: examTypes,
+          items: DropdownData.examTypes,
           icon: Icons.assignment_outlined,
           color: const Color(0xFF8B5CF6),
           onChanged: (value) {

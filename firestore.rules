@@ -1,50 +1,260 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Question Papers Collection
-    match /question_papers/{paperId} {
-      // Anyone can read question papers
-      allow read: if true;
-      
-      // Only authenticated users can create
-      allow create: if request.auth != null
-                    && request.resource.data.keys().hasAll([
-                      'college', 'branch', 'semester', 
-                      'subject', 'examType', 'imageUrl'
-                    ])
-                    && request.resource.data.imageUrl is string
-                    && request.resource.data.imageUrl.matches('https://.*');
-      
-      // Only authenticated users can update/delete their own papers
-      allow update, delete: if request.auth != null;
+
+    // ═══════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+
+    /// Returns true if the request is from a signed-in user.
+    function isAuthenticated() {
+      return request.auth != null;
     }
-    
-    // Submitted Papers Collection (your current collection)
-    match /submitted_papers/{paperId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+
+    /// Returns true if the signed-in user's UID matches `userId`.
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Users Collection
+
+    /// Returns true if the signed-in user has admin role set in their
+    /// user document.
+    function isAdmin() {
+      return isAuthenticated()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    /// Validates that a string field exists, is non-empty, and ≤ maxLen.
+    function validString(field, maxLen) {
+      return field is string && field.size() > 0 && field.size() <= maxLen;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // USERS
+    // ═══════════════════════════════════════════════════════════════
+
     match /users/{userId} {
-      // Users can read their own data
-      allow read: if request.auth != null && request.auth.uid == userId;
-      
-      // Users can create their own profile
-      allow create: if request.auth != null && request.auth.uid == userId;
-      
-      // Users can update their own profile
-      allow update: if request.auth != null && request.auth.uid == userId;
-      
-      // Prevent deletion
-      allow delete: if false;
+      // Users can read their own document.
+      // Admins can read any user document.
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Users can create their own document on signup.
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll(['email', 'createdAt'])
+        && validString(request.resource.data.email, 320);
+
+      // Users can update their own profile.
+      // Cannot escalate role field.
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid']);
+
+      allow delete: if false; // Users cannot delete accounts via client
     }
-    
-    // Test collection (for development)
-    match /test/{document=**} {
-      allow read, write: if true;
+
+    // ═══════════════════════════════════════════════════════════════
+    // SUBMITTED PAPERS (uploaded paper images + metadata)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /submitted_papers/{paperId} {
+      // Authenticated users can read papers
+      allow read: if isAuthenticated();
+
+      // Authenticated users can create papers with required fields
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll([
+             'college', 'branch', 'semester', 'subject', 'examType',
+             'imageUrl', 'userId', 'timestamp'
+           ])
+        && validString(request.resource.data.college, 200)
+        && validString(request.resource.data.branch, 100)
+        && validString(request.resource.data.semester, 20)
+        && validString(request.resource.data.subject, 200)
+        && validString(request.resource.data.examType, 50)
+        && validString(request.resource.data.imageUrl, 500);
+
+      // Only the uploader can update their paper (for upvotes/downvotes,
+      // views, etc. — bulk stats updates happen via Cloud Functions)
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+
+      // Only the uploader or admin can delete
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // Votes sub-collection: one vote doc per user per paper
+      match /votes/{voteId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && voteId == request.auth.uid;
+        allow update: if isAuthenticated() && voteId == request.auth.uid;
+        allow delete: if isAuthenticated() && voteId == request.auth.uid;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // QUESTION PAPERS (topic extraction results)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /question_papers/{docId} {
+      // Authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Only authenticated users can create with required fields
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll([
+             'college', 'branch', 'semester', 'subject', 'examType',
+             'topics', 'userId', 'uploadedAt'
+           ]);
+
+      // Only owner or admin can update
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+
+      // Only owner or admin can delete
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // QUESTIONS (topic frequency aggregation)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /questions/{docId} {
+      // Authenticated users can read aggregated topic data
+      allow read: if isAuthenticated();
+
+      // Only Cloud Functions or admin can write
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TOPICS (top-level aggregated topic collection)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /topics/{topicId} {
+      allow read: if isAuthenticated();
+      // Write only via Cloud Functions (admin SDK bypasses rules)
+      allow write: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // STUDY GROUPS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /study_groups/{groupId} {
+      // Members can read
+      allow read: if isAuthenticated()
+        && (request.auth.uid in resource.data.memberIds || isAdmin());
+
+      // Any authenticated user can create a group
+      allow create: if isAuthenticated()
+        && request.resource.data.createdBy == request.auth.uid
+        && validString(request.resource.data.name, 100);
+
+      // Only creator or admin can update
+      allow update: if isAuthenticated()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+
+      // Only creator or admin can delete
+      allow delete: if isAuthenticated()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DOUBTS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /doubts/{doubtId} {
+      // All authenticated users can read doubts
+      allow read: if isAuthenticated();
+
+      // Authenticated users can post doubts
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && validString(request.resource.data.text, 2000);
+
+      // Only poster can update their doubt
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+
+      // Only poster or admin can delete
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // Answers sub-collection
+      match /answers/{answerId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated()
+          && request.resource.data.userId == request.auth.uid;
+        allow update: if isOwner(resource.data.userId);
+        allow delete: if isOwner(resource.data.userId) || isAdmin();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PAPER REQUESTS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /paper_requests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated(); // any user can "fulfill"
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NOTIFICATIONS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /notifications/{notifId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+
+      // Only Cloud Functions should create notifications
+      // Allow authenticated writes as a fallback
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PLATFORM STATS & ADMIN (read-only for clients)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /platform_stats/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /daily_uploads/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /admin_queue/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLLEGES (reference data)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /colleges/{collegeId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /branches/{branchId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CATCH-ALL: deny everything else
+    // ═══════════════════════════════════════════════════════════════
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

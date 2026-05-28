@@ -1,3 +1,5 @@
+// lib/providers/dashboard_provider.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exam_ready/services/dashboard_service.dart';
 import 'package:exam_ready/models/question_paper_model.dart';
@@ -7,53 +9,54 @@ final dashboardServiceProvider = Provider<DashboardService>((ref) {
   return DashboardService();
 });
 
-/// Active users count provider
-final activeUsersCountProvider = StreamProvider<int>((ref) {
+/// Active users count provider — autoDispose to prevent memory leaks
+final activeUsersCountProvider = StreamProvider.autoDispose<int>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getActiveUsersCount();
 });
 
 /// Exam papers count provider
-final examPapersCountProvider = StreamProvider<int>((ref) {
+final examPapersCountProvider = StreamProvider.autoDispose<int>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getCollectionCount('question_papers');
 });
 
 /// Colleges count provider
-final collegesCountProvider = StreamProvider<int>((ref) {
+final collegesCountProvider = StreamProvider.autoDispose<int>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getCollectionCount('colleges');
 });
 
 /// Branches count provider
-final branchesCountProvider = StreamProvider<int>((ref) {
+final branchesCountProvider = StreamProvider.autoDispose<int>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getCollectionCount('branches');
 });
 
 /// Recent activity provider
-final recentActivityProvider = StreamProvider<List<Map<String, dynamic>>>((
-  ref,
-) {
+final recentActivityProvider =
+    StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getRecentActivity();
 });
 
 /// Recent question papers provider
-final recentQuestionPapersProvider = StreamProvider<List<QuestionPaper>>((ref) {
+final recentQuestionPapersProvider =
+    StreamProvider.autoDispose<List<QuestionPaper>>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getRecentQuestionPapers();
 });
 
 /// Dashboard statistics provider
-final dashboardStatsProvider = FutureProvider<Map<String, int>>((ref) {
+final dashboardStatsProvider =
+    FutureProvider.autoDispose<Map<String, int>>((ref) {
   final dashboardService = ref.watch(dashboardServiceProvider);
   return dashboardService.getDashboardStats();
 });
 
 /// User activity provider
-final userActivityProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
-      final dashboardService = ref.watch(dashboardServiceProvider);
-      return dashboardService.getUserActivity(userId);
-    });
+final userActivityProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, userId) {
+  final dashboardService = ref.watch(dashboardServiceProvider);
+  return dashboardService.getUserActivity(userId);
+});

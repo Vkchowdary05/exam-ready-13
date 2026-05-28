@@ -1,12 +1,10 @@
 // lib/services/firebase_service.dart
 
 import 'package:exam_ready/firebase_options.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Centralized Firebase service to prevent multiple instance creation
 /// and ensure proper resource management.
@@ -28,15 +26,16 @@ class FirebaseService {
   // Storage
   FirebaseStorage get storage => FirebaseStorage.instance;
 
-  /// Initialize Firebase (should be called once in main.dart)
+  /// Initialize Firebase (should be called once in main.dart).
+  ///
+  /// NOTE: App Check is now activated in main.dart directly,
+  /// not here, since the ReCAPTCHA key is passed via --dart-define
+  /// instead of from dotenv.
   static Future<void> initialize() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await FirebaseAppCheck.instance.activate(
-      webProvider: ReCaptchaV3Provider(dotenv.env['RECAPTCHA_V3_SITE_KEY']!),
-      androidProvider: AndroidProvider.playIntegrity,
-    );
+    // App Check activation moved to main.dart
   }
 
   /// Check if Firebase is initialized

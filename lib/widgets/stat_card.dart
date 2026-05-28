@@ -1,7 +1,7 @@
 // lib/widgets/stat_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../theme/entry_theme.dart';
+import '../theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
   final IconData icon;
@@ -20,9 +20,15 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gradients = [
-      AppTheme.primaryGradient,
-      AppTheme.secondaryGradient,
-      AppTheme.accentGradient,
+      const LinearGradient(
+        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+      ),
+      const LinearGradient(
+        colors: [Color(0xFF10B981), Color(0xFF059669)],
+      ),
+      const LinearGradient(
+        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+      ),
       const LinearGradient(
         colors: [Color(0xFFEC4899), Color(0xFFF59E0B)],
         begin: Alignment.topLeft,
@@ -72,12 +78,19 @@ class StatCard extends StatelessWidget {
                   const Spacer(),
                   Text(
                     number,
-                    style: AppTheme.statNumberStyle,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     label,
-                    style: AppTheme.statLabelStyle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
                   ),
                 ],
               ),

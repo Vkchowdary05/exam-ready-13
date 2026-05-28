@@ -3,14 +3,21 @@
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:exam_ready/utils/sanitizer.dart';
+import 'package:exam_ready/utils/constants.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Preferred submit method — returns the created document ID.
-  /// - Stores userId + userName in submitted_papers
-  /// - Creates a reference under users/{uid}/submitted_papers/{paperId}
+  // ─── Submit Paper (primary) ────────────────────────────────────
+
+  /// Submit a question paper image to Firestore.
+  ///
+  /// - Sanitizes all metadata fields
+  /// - Checks for duplicate uploads
+  /// - Links paper to user
+  /// - Returns the created document ID
   Future<String> submitQuestionPaper({
     required String college,
     required String branch,
@@ -21,66 +28,77 @@ class FirestoreService {
     String? userId,
   }) async {
     try {
-      // resolve userId (from param or FirebaseAuth)
       userId ??= _auth.currentUser?.uid;
       if (userId == null) {
         throw Exception('User not logged in. Cannot submit paper.');
       }
 
+      // ── Sanitize inputs ──────────────────────────────────────
+      final sanitizedCollege = InputSanitizer.sanitizeMetadataField(college);
+      final sanitizedBranch = InputSanitizer.sanitizeMetadataField(branch);
+      final sanitizedSemester = InputSanitizer.sanitizeMetadataField(semester);
+      final sanitizedSubject = InputSanitizer.sanitizeMetadataField(subject);
+      final sanitizedExamType = InputSanitizer.sanitizeMetadataField(examType);
+
+      // ── Check for duplicates ─────────────────────────────────
+      final isDuplicate = await _checkDuplicate(
+        imageUrl: imageUrl,
+        college: sanitizedCollege,
+        branch: sanitizedBranch,
+        semester: sanitizedSemester,
+        subject: sanitizedSubject,
+        examType: sanitizedExamType,
+      );
+
+      if (isDuplicate) {
+        throw Exception(
+          'This paper appears to have been uploaded already. '
+          'Would you like to search for it instead?',
+        );
+      }
+
       developer.log(
-        'Attempting to create document in submitted_papers...',
+        'Creating document in submitted_papers...',
         name: 'FirestoreService',
       );
 
-      // 1) Get user name from users/{uid} (fallback to auth email)
-      String? userName;
-      try {
-        final userDoc =
-            await _firestore.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          final data = userDoc.data() as Map<String, dynamic>?;
-          userName = data?['name'] as String?;
-          userName ??= data?['userName'] as String?;
-          userName ??= data?['email'] as String?;
-        }
-      } catch (_) {
-        // ignore, we'll fallback
-      }
-      userName ??= _auth.currentUser?.email ?? 'Unknown';
+      // ── Get user name ────────────────────────────────────────
+      String userName = await _getUserName(userId);
 
-      final serverTs = FieldValue.serverTimestamp();
-      final nowIso = DateTime.now().toIso8601String();
-
-      // 2) Create main document in submitted_papers
-      final docRef = await _firestore.collection('submitted_papers').add({
-        // canonical
-        'college': college,
-        'branch': branch,
-        'semester': semester,
-        'subject': subject,
-        'examType': examType,
+      // ── Create document ──────────────────────────────────────
+      final docRef = await _firestore
+          .collection(AppConstants.papersCollection)
+          .add({
+        'college': sanitizedCollege,
+        'branch': sanitizedBranch,
+        'semester': sanitizedSemester,
+        'subject': sanitizedSubject,
+        'examType': sanitizedExamType,
         'imageUrl': imageUrl,
-        'uploadedAt': serverTs,
-        'timestamp': serverTs,
+        'uploadedAt': FieldValue.serverTimestamp(),
+        'timestamp': FieldValue.serverTimestamp(),
         'status': 'pending',
         'userId': userId,
         'userName': userName,
-
-        
+        'upvotes': 0,
+        'downvotes': 0,
+        'views': 0,
+        'verified': false,
+        'flagged': false,
       });
 
       developer.log(
-        'Firestore: Document created with ID: ${docRef.id}',
+        'Document created with ID: ${docRef.id}',
         name: 'FirestoreService',
       );
 
-      // 3) Link this paper under user doc (subcollection with only ID)
+      // ── Link paper to user ───────────────────────────────────
       await _linkPaperToUser(userId: userId, paperId: docRef.id);
 
       return docRef.id;
     } catch (e, s) {
       developer.log(
-        'Error submitting question paper to Firestore',
+        'Error submitting paper',
         name: 'FirestoreService',
         error: e,
         stackTrace: s,
@@ -89,7 +107,7 @@ class FirestoreService {
     }
   }
 
-  /// Backward-compatible wrapper used by old UI code.
+  /// Backward-compatible wrapper
   Future<String> submitToSubmittedPapers({
     required String college,
     required String branch,
@@ -110,51 +128,11 @@ class FirestoreService {
     );
   }
 
-  /// Only creates a reference document under:
-  /// users/{userId}/submitted_papers/{paperId}
-  /// with a single field: paperId
-  Future<void> _linkPaperToUser({
-    required String userId,
-    required String paperId,
-  }) async {
-    try {
-      final userDocRef = _firestore.collection('users').doc(userId);
+  // ─── Submit Topic Extraction Results ───────────────────────────
 
-      // Ensure user doc exists (but don't overwrite details)
-      await userDocRef.set(
-        {
-          'uid': userId,
-          'lastPaperLinkedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-
-      final userPaperRef =
-          userDocRef.collection('submitted_papers').doc(paperId);
-
-      await userPaperRef.set(
-        {
-          'paperId': paperId,
-        },
-        SetOptions(merge: true),
-      );
-
-      developer.log(
-        'Linked paper $paperId to user $userId (ID only)',
-        name: 'FirestoreService',
-      );
-    } catch (e, s) {
-      developer.log(
-        'Error linking paper $paperId to user $userId',
-        name: 'FirestoreService',
-        error: e,
-        stackTrace: s,
-      );
-      // don't rethrow; main submit already succeeded
-    }
-  }
-
-  /// Legacy "question_papers" collection for topic metadata (if you still use it)
+  /// Save topic extraction results to `question_papers` collection.
+  ///
+  /// Topics are sanitized before storage.
   Future<void> submitToQuestionPapers({
     required String college,
     required String branch,
@@ -163,31 +141,45 @@ class FirestoreService {
     required String examType,
     required List<String> topics,
   }) async {
+    final userId = _auth.currentUser?.uid;
+
+    // Sanitize topics
+    final sanitizedTopics = InputSanitizer.sanitizeTopics(topics);
+
     final doc = {
-      'college': college,
-      'branch': branch,
-      'semester': semester,
-      'subject': subject,
-      'examType': examType,
-      'topics': topics,
+      'college': InputSanitizer.sanitizeMetadataField(college),
+      'branch': InputSanitizer.sanitizeMetadataField(branch),
+      'semester': InputSanitizer.sanitizeMetadataField(semester),
+      'subject': InputSanitizer.sanitizeMetadataField(subject),
+      'examType': InputSanitizer.sanitizeMetadataField(examType),
+      'topics': sanitizedTopics,
+      'userId': userId,
+      'uploadedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
     };
 
-    await _firestore.collection('question_papers').add(doc);
+    await _firestore
+        .collection(AppConstants.questionPapersCollection)
+        .add(doc);
   }
 
+  // ─── Update Topic Frequency ────────────────────────────────────
+
   /// Update topic frequency counts in `questions` collection.
-  /// This is what you call after Groq topic extraction.
   Future<void> updateQuestionsCollection({
     required String documentName,
     required List<String> topics,
   }) async {
-    final DocumentReference docRef =
-        _firestore.collection('questions').doc(documentName);
+    // Sanitize topics first
+    final sanitizedTopics = InputSanitizer.sanitizeTopics(topics);
+
+    final DocumentReference docRef = _firestore
+        .collection(AppConstants.questionsCollection)
+        .doc(documentName);
 
     // Compute frequencies
     final Map<String, int> freq = {};
-    for (final t in topics) {
+    for (final t in sanitizedTopics) {
       final key = t.trim();
       if (key.isEmpty) continue;
       freq[key] = (freq[key] ?? 0) + 1;
@@ -225,21 +217,198 @@ class FirestoreService {
     });
   }
 
-  /// "24 November 2025 at 23:24:59 UTC+5:30"
+  // ─── Voting ────────────────────────────────────────────────────
+
+  /// Upvote or downvote a paper. Uses per-user vote tracking.
+  Future<void> votePaper({
+    required String paperId,
+    required bool isUpvote,
+  }) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) throw Exception('Not logged in.');
+
+    final paperRef = _firestore
+        .collection(AppConstants.papersCollection)
+        .doc(paperId);
+
+    final voteRef = paperRef.collection('votes').doc(userId);
+
+    await _firestore.runTransaction((transaction) async {
+      final voteSnap = await transaction.get(voteRef);
+      final paperSnap = await transaction.get(paperRef);
+
+      if (!paperSnap.exists) throw Exception('Paper not found.');
+
+      final currentVote = voteSnap.exists
+          ? (voteSnap.data()?['vote'] as String?)
+          : null;
+
+      final updates = <String, dynamic>{};
+
+      if (currentVote == null) {
+        // New vote
+        if (isUpvote) {
+          updates['upvotes'] = FieldValue.increment(1);
+        } else {
+          updates['downvotes'] = FieldValue.increment(1);
+        }
+        transaction.set(
+          voteRef,
+          {'vote': isUpvote ? 'up' : 'down', 'timestamp': FieldValue.serverTimestamp()},
+        );
+      } else if (currentVote == 'up' && !isUpvote) {
+        // Switch from upvote to downvote
+        updates['upvotes'] = FieldValue.increment(-1);
+        updates['downvotes'] = FieldValue.increment(1);
+        transaction.update(voteRef, {'vote': 'down', 'timestamp': FieldValue.serverTimestamp()});
+      } else if (currentVote == 'down' && isUpvote) {
+        // Switch from downvote to upvote
+        updates['downvotes'] = FieldValue.increment(-1);
+        updates['upvotes'] = FieldValue.increment(1);
+        transaction.update(voteRef, {'vote': 'up', 'timestamp': FieldValue.serverTimestamp()});
+      } else {
+        // Same vote — toggle off
+        if (currentVote == 'up') {
+          updates['upvotes'] = FieldValue.increment(-1);
+        } else {
+          updates['downvotes'] = FieldValue.increment(-1);
+        }
+        transaction.delete(voteRef);
+      }
+
+      if (updates.isNotEmpty) {
+        transaction.update(paperRef, updates);
+      }
+    });
+  }
+
+  /// Increment view count for a paper
+  Future<void> incrementViews(String paperId) async {
+    try {
+      await _firestore
+          .collection(AppConstants.papersCollection)
+          .doc(paperId)
+          .update({'views': FieldValue.increment(1)});
+    } catch (e) {
+      developer.log('Error incrementing views', name: 'FirestoreService', error: e);
+    }
+  }
+
+  // ─── Bookmarks ─────────────────────────────────────────────────
+
+  /// Toggle bookmark for current user
+  Future<void> toggleBookmark(String paperId) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) throw Exception('Not logged in.');
+
+    final userRef = _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(userId);
+
+    final userDoc = await userRef.get();
+    final bookmarks = List<String>.from(
+      userDoc.data()?['bookmarkedPapers'] ?? [],
+    );
+
+    if (bookmarks.contains(paperId)) {
+      bookmarks.remove(paperId);
+    } else {
+      bookmarks.add(paperId);
+    }
+
+    await userRef.update({'bookmarkedPapers': bookmarks});
+  }
+
+  // ─── Private Helpers ───────────────────────────────────────────
+
+  /// Check if a paper with similar metadata already exists
+  Future<bool> _checkDuplicate({
+    required String imageUrl,
+    required String college,
+    required String branch,
+    required String semester,
+    required String subject,
+    required String examType,
+  }) async {
+    try {
+      // Check by same metadata (not image URL, as that's unique per upload)
+      final query = await _firestore
+          .collection(AppConstants.papersCollection)
+          .where('college', isEqualTo: college)
+          .where('branch', isEqualTo: branch)
+          .where('semester', isEqualTo: semester)
+          .where('subject', isEqualTo: subject)
+          .where('examType', isEqualTo: examType)
+          .limit(5)
+          .get();
+
+      // If 5+ papers with same metadata exist, likely duplicate
+      return query.docs.length >= 5;
+    } catch (e) {
+      // On error, don't block the upload
+      return false;
+    }
+  }
+
+  /// Get user's display name
+  Future<String> _getUserName(String userId) async {
+    try {
+      final userDoc = await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data() as Map<String, dynamic>?;
+        return data?['name'] as String? ??
+            data?['userName'] as String? ??
+            data?['email'] as String? ??
+            _auth.currentUser?.email ??
+            'Unknown';
+      }
+    } catch (_) {}
+    return _auth.currentUser?.email ?? 'Unknown';
+  }
+
+  /// Link paper to user's submitted_papers subcollection
+  Future<void> _linkPaperToUser({
+    required String userId,
+    required String paperId,
+  }) async {
+    try {
+      final userDocRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId);
+
+      await userDocRef.set(
+        {'lastPaperLinkedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+
+      await userDocRef
+          .collection('submitted_papers')
+          .doc(paperId)
+          .set({'paperId': paperId}, SetOptions(merge: true));
+
+      developer.log(
+        'Linked paper $paperId to user $userId',
+        name: 'FirestoreService',
+      );
+    } catch (e, s) {
+      developer.log(
+        'Error linking paper $paperId to user $userId',
+        name: 'FirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  /// Format date as IST human-readable string
   String _formatHumanReadableIST(DateTime dt) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     final day = dt.day.toString().padLeft(2, '0');
     final month = months[dt.month - 1];
